@@ -1,48 +1,138 @@
-import { useEffect, useState } from "react";
-import API from "./services/taskApi";
-import TaskForm from "./components/TaskForm";
-import TaskList from "./components/TaskList";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Outlet,
+} from "react-router-dom";
+
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+import Login from "./pages/Login";
+
+import Tasks from "./pages/Tasks";
+import CreateTask from "./pages/CreateTask";
+
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminTasks from "./pages/AdminTasks";
+
 import "./App.css";
 
-function App() {
-  const [tasks, setTasks] = useState([]);
-  const [editingTask, setEditingTask] = useState(null);
 
-  // Fetch all tasks
-  const fetchTasks = async () => {
-    try {
-      const response = await API.get("/");
-      console.log("Tasks Response:", response.data);
-
-      setTasks(response.data.data);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-    }
-  };
-
-  // Load tasks when page loads
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
+function MainLayout() {
   return (
-    <div className="container">
-      <h1>Task Management System</h1>
+    <div className="app">
 
-      <TaskForm
-        fetchTasks={fetchTasks}
-        editingTask={editingTask}
-        setEditingTask={setEditingTask}
-      />
+      <Navbar />
 
-      <hr />
+      <div className="app-body">
 
-      <TaskList
-        tasks={tasks}
-        fetchTasks={fetchTasks}
-        setEditingTask={setEditingTask}
-      />
+        <Sidebar />
+
+        <main className="main-content">
+          <Outlet />
+        </main>
+
+      </div>
+
     </div>
+  );
+}
+
+
+function App() {
+  return (
+    <BrowserRouter>
+
+      <Routes>
+
+        {/* LOGIN */}
+
+        <Route
+          path="/"
+          element={<Login />}
+        />
+
+        <Route
+          path="/login"
+          element={<Login />}
+        />
+
+
+        {/* PROTECTED APPLICATION */}
+
+        <Route element={<MainLayout />}>
+
+          {/* =====================
+              USER
+          ===================== */}
+
+          <Route
+            path="/tasks"
+            element={
+              <ProtectedRoute allowedRole="user">
+                <Tasks />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/create-task"
+            element={
+              <ProtectedRoute allowedRole="user">
+                <CreateTask />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/edit-task/:id"
+            element={
+              <ProtectedRoute allowedRole="user">
+                <CreateTask />
+              </ProtectedRoute>
+            }
+          />
+
+
+          {/* =====================
+              ADMIN
+          ===================== */}
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/tasks"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <AdminTasks />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ADMIN EDIT TASK */}
+          <Route
+            path="/admin/edit-task/:id"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <CreateTask />
+              </ProtectedRoute>
+            }
+          />
+
+        </Route>
+
+      </Routes>
+
+    </BrowserRouter>
   );
 }
 

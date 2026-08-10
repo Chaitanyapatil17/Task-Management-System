@@ -1,53 +1,83 @@
+import { useNavigate } from "react-router-dom";
 import API from "../services/taskApi";
 
-function TaskItem({ task, fetchTasks, setEditingTask }) {
+function TaskItem({ task, fetchTasks }) {
+  const navigate = useNavigate();
+
   const handleDelete = async () => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this task?"
     );
 
-    if (!confirmDelete) return;
+    if (!confirmDelete) {
+      return;
+    }
 
     try {
-      await API.delete(`/${task._id}`);
+      await API.delete(`/tasks/${task._id}`);
+
       fetchTasks();
     } catch (error) {
-      console.log(error);
+      console.error("Error deleting task:", error);
+
+      alert("Failed to delete task.");
     }
   };
 
+  const handleEdit = () => {
+    navigate(`/edit-task/${task._id}`);
+  };
+
+  const statusClass = task.status
+    .toLowerCase()
+    .replace(" ", "-");
+
   return (
-    <div
-      style={{
-        border: "1px solid #ccc",
-        padding: "15px",
-        marginTop: "10px",
-        borderRadius: "8px",
-      }}
-    >
-      <h3>{task.title}</h3>
+    <div className="task-card">
 
-      <p>{task.description}</p>
+      <div className="task-card-top">
 
-      <p>
-        <strong>Status:</strong> {task.status}
-      </p>
+        <div>
+          <h3>{task.title}</h3>
 
-      <p>
-        <strong>Created:</strong>{" "}
-        {new Date(task.createdAt).toLocaleString()}
-      </p>
+          <p className="task-description">
+            {task.description || "No description provided."}
+          </p>
+        </div>
 
-      <button onClick={() => setEditingTask(task)}>
-        Edit
-      </button>
+        <span className={`status-badge ${statusClass}`}>
+          {task.status}
+        </span>
 
-      <button
-        onClick={handleDelete}
-        style={{ marginLeft: "10px" }}
-      >
-        Delete
-      </button>
+      </div>
+
+      <div className="task-card-bottom">
+
+        <span className="task-date">
+          Created:{" "}
+          {new Date(task.createdAt).toLocaleDateString()}
+        </span>
+
+        <div className="task-actions">
+
+          <button
+            className="edit-button"
+            onClick={handleEdit}
+          >
+            Edit
+          </button>
+
+          <button
+            className="delete-button"
+            onClick={handleDelete}
+          >
+            Delete
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
   );
 }

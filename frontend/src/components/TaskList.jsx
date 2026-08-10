@@ -1,22 +1,29 @@
 import TaskItem from "./TaskItem";
 
-function TaskList({ tasks, fetchTasks, setEditingTask }) {
-  return (
-    <div>
-      <h2>All Tasks</h2>
+function TaskList({ tasks, fetchTasks }) {
+  if (tasks.length === 0) {
+    return (
+      <div className="empty-state">
+        <div className="empty-icon">📋</div>
 
-      {tasks.length === 0 ? (
-        <p>No Tasks Found</p>
-      ) : (
-        tasks.map((task) => (
-          <TaskItem
-            key={task._id}
-            task={task}
-            fetchTasks={fetchTasks}
-            setEditingTask={setEditingTask}
-          />
-        ))
-      )}
+        <h3>No Tasks Found</h3>
+
+        <p>
+          You don't have any tasks yet. Create your first task.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="task-list">
+      {tasks.map((task) => (
+        <TaskItem
+          key={task._id}
+          task={task}
+          fetchTasks={fetchTasks}
+        />
+      ))}
     </div>
   );
 }
