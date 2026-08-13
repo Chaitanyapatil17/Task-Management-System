@@ -4,7 +4,6 @@ import API from "../services/taskApi";
 import FileViewerModal from "./FileViewerModal";
 import { getInlineFileUrl } from "../utils/fileUtils";
 
-// Priority config: colour + label
 const PRIORITY_CFG = {
   Low:      { cls: "priority-low",      dot: "🟢" },
   Medium:   { cls: "priority-medium",   dot: "🟡" },
@@ -16,8 +15,8 @@ function getDueInfo(dueDate, status) {
   if (!dueDate || status === "Done") return null;
   const due   = new Date(dueDate);
   const now   = new Date();
-  const diff  = due - now;                       // ms
-  const days  = Math.ceil(diff / 86400000);      // positive = future, negative = past
+  const diff  = due - now;
+  const days  = Math.ceil(diff / 86400000);
 
   if (days < 0)  return { label: `Overdue by ${Math.abs(days)}d`,  cls: "due-overdue"  };
   if (days === 0) return { label: "Due today",                       cls: "due-today"    };
@@ -29,6 +28,7 @@ function TaskItem({ task, fetchTasks }) {
   const navigate = useNavigate();
   const [showAttachments, setShowAttachments] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [archiving, setArchiving] = useState(false);
 
   const user    = JSON.parse(localStorage.getItem("user") || "{}");
   const isAdmin = user.role === "admin";
@@ -41,6 +41,26 @@ function TaskItem({ task, fetchTasks }) {
     } catch { alert("Failed to delete task."); }
   };
 
+  const handleArchive = async () => {
+    if (!window.confirm("Archive this task?")) return;
+    try {
+      setArchiving(true);
+      await API.archiveTask(task._id);
+      fetchTasks();
+    } catch { alert("Failed to archive task."); }
+    finally { setArchiving(false); }
+  };
+
+  const handleRestore = async () => {
+    if (!window.confirm("Restore this task from archive?")) return;
+    try {
+      setArchiving(true);
+      await API.restoreTask(task._id);
+      fetchTasks();
+    } catch { alert("Failed to restore task."); }
+    finally { setArchiving(false); }
+  };
+
   const handleView = () => {
     navigate(isAdmin ? `/admin/tasks/${task._id}/detail` : `/tasks/${task._id}/detail`);
   };
@@ -48,10 +68,15 @@ function TaskItem({ task, fetchTasks }) {
   const handleEdit = () => {
     navigate(isAdmin ? `/admin/edit-task/${task._id}` : `/edit-task/${task._id}`);
   };
-  const statusClass  = task.status.toLowerCase().replace(" ", "-");
+
+  const statusClass  = task.status?.toLowerCase().replace(" ", "-") || "pending";
   const priorityCfg  = PRIORITY_CFG[task.priority] || PRIORITY_CFG.Medium;
   const dueInfo      = getDueInfo(task.dueDate, task.status);
   const attachments  = task.attachments || [];
+  const subtasks     = task.subtasks || [];
+  const completedSubtasks = subtasks.filter((s) => s.completed).length;
+  const subtaskProgress = subtasks.length > 0 ? Math.round((completedSubtasks / subtasks.length) * 100) : 0;
+  const tags         = task.tags || [];
 
   const formatSize = (bytes) => {
     if (!bytes) return "";
@@ -62,13 +87,11 @@ function TaskItem({ task, fetchTasks }) {
 
   return (
     <div className={`task-card ${dueInfo?.cls === "due-overdue" ? "task-card-overdue" : ""}`}>
-      {/* File Viewer Modal */}
       {selectedFile && (
         <FileViewerModal file={selectedFile} onClose={() => setSelectedFile(null)} />
       )}
 
       <div className="task-card-top">
-        {/* Title row: title + priority + status */}
         <div className="task-card-title-row">
           <h3>{task.title}</h3>
           <div className="task-card-badges">
@@ -76,6 +99,7 @@ function TaskItem({ task, fetchTasks }) {
               {priorityCfg.dot} {task.priority || "Medium"}
             </span>
             <span className={`status-badge ${statusClass}`}>{task.status}</span>
+            {task.isArchived && <span className="status-badge pending">Archived</span>}
           </div>
         </div>
 
@@ -90,11 +114,41 @@ function TaskItem({ task, fetchTasks }) {
             <span className="assignee-email">{task.assignedTo.email}</span>
           </div>
         )}
+
+        {tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+            {tags.map((tag, i) => (
+              <span key={i} style={{
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "2px 10px",
+                borderRadius: 20,
+                background: "#eef2ff",
+                color: "#4f46e5",
+              }}>
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {subtasks.length > 0 && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 12, color: "var(--gray-500)" }}>Subtasks</span>
+              <span style={{ fontSize: 12, color: "var(--gray-500)" }}>
+                {completedSubtasks}/{subtasks.length}
+              </span>
+            </div>
+            <div style={{ height: 6, background: "var(--gray-100)", borderRadius: 99, overflow: "hidden" }}>
+              <div style={{ width: `${subtaskProgress}%`, height: "100%", background: subtaskProgress === 100 ? "var(--success)" : "var(--primary)", borderRadius: 99, transition: "width .3s ease" }} />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="task-card-bottom">
         <div className="task-meta">
-          {/* Created date */}
           <span className="task-date">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -103,7 +157,6 @@ function TaskItem({ task, fetchTasks }) {
             {new Date(task.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
 
-          {/* Due date / overdue pill */}
           {dueInfo && (
             <span className={`due-badge ${dueInfo.cls}`}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -113,7 +166,6 @@ function TaskItem({ task, fetchTasks }) {
             </span>
           )}
 
-          {/* Attachments toggle */}
           {attachments.length > 0 && (
             <button className="attachments-toggle" onClick={() => setShowAttachments((p) => !p)}>
               📎 {attachments.length} file{attachments.length > 1 ? "s" : ""}
@@ -122,13 +174,21 @@ function TaskItem({ task, fetchTasks }) {
         </div>
 
         <div className="task-actions">
-          <button className="view-button"   onClick={handleView}>View</button>
-          <button className="edit-button"   onClick={handleEdit}>Edit</button>
+          <button className="view-button" onClick={handleView}>View</button>
+          <button className="edit-button" onClick={handleEdit}>Edit</button>
+          {task.isArchived ? (
+            <button className="edit-button" onClick={handleRestore} disabled={archiving}>
+              {archiving ? "..." : "Restore"}
+            </button>
+          ) : (
+            <button className="edit-button" onClick={handleArchive} disabled={archiving}>
+              {archiving ? "..." : "Archive"}
+            </button>
+          )}
           <button className="delete-button" onClick={handleDelete}>Delete</button>
         </div>
       </div>
 
-      {/* Attachment list */}
       {showAttachments && attachments.length > 0 && (
         <div className="task-attachments">
           {attachments.map((a, i) => (

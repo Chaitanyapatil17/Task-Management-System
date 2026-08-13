@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getInlineFileUrl, getFileType, formatFileSize } from "../utils/fileUtils";
 
 function FileViewerModal({ file, onClose }) {
@@ -9,6 +9,7 @@ function FileViewerModal({ file, onClose }) {
   const fileName = file.filename || file.name || "Attachment";
   const fileType = getFileType(fileName, file.mimetype);
   const fileSizeStr = formatFileSize(file.size);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -67,9 +68,23 @@ function FileViewerModal({ file, onClose }) {
 
         {/* Content Viewer Body */}
         <div className="file-viewer-body">
-          {fileType === "image" ? (
+          {fileType === "image" && !imgError ? (
             <div className="viewer-image-container">
-              <img src={inlineUrl} alt={fileName} className="viewer-preview-img" />
+              <img
+                src={inlineUrl}
+                alt={fileName}
+                className="viewer-preview-img"
+                onError={() => setImgError(true)}
+              />
+            </div>
+          ) : fileType === "image" && imgError ? (
+            <div className="viewer-fallback-container">
+              <span className="fallback-icon">🖼️</span>
+              <h4>{fileName}</h4>
+              <p>Preview unavailable. The image may be missing or inaccessible.</p>
+              <button className="btn-file-action primary" onClick={handleOpenNewTab}>
+                Try Opening Inline in Browser
+              </button>
             </div>
           ) : fileType === "pdf" ? (
             <iframe

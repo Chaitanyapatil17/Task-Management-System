@@ -36,6 +36,11 @@ const taskSchema = new mongoose.Schema(
       default: null,
     },
 
+    startDate: {
+      type: Date,
+      default: null,
+    },
+
     // Task prerequisites/dependencies
     prerequisites: [
       {
@@ -47,15 +52,111 @@ const taskSchema = new mongoose.Schema(
     // File attachments
     attachments: [
       {
-        filename:   { type: String },      // original file name
-        storedName: { type: String },      // Cloudinary public_id
+        filename:   { type: String },
+        storedName: { type: String },
         mimetype:   { type: String },
         size:       { type: Number },
-        url:        { type: String },      // Cloudinary secure URL
-        publicId:   { type: String },      // Cloudinary public_id for deletion
+        url:        { type: String },
+        publicId:   { type: String },
         uploadedAt: { type: Date, default: Date.now },
       },
     ],
+
+    // Subtasks with progress tracking
+    subtasks: [
+      {
+        title: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        completed: {
+          type: Boolean,
+          default: false,
+        },
+        completedAt: {
+          type: Date,
+          default: null,
+        },
+        assignedTo: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
+      },
+    ],
+
+    // Tags
+    tags: [
+      {
+        type: String,
+        trim: true,
+        lowercase: true,
+      },
+    ],
+
+    // Custom fields
+    customFields: [
+      {
+        key: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        value: {
+          type: String,
+          trim: true,
+        },
+      },
+    ],
+
+    // Archive
+    isArchived: {
+      type: Boolean,
+      default: false,
+    },
+    archivedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Recurring task
+    recurrence: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      frequency: {
+        type: String,
+        enum: ["daily", "weekly", "monthly", "yearly"],
+        default: null,
+      },
+      interval: {
+        type: Number,
+        default: 1,
+        min: 1,
+      },
+      endDate: {
+        type: Date,
+        default: null,
+      },
+      nextOccurrence: {
+        type: Date,
+        default: null,
+      },
+      parentTask: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Task",
+        default: null,
+      },
+    },
+
+    // Template
+    templateName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -26,6 +26,8 @@ import CreateAdmin from "./pages/CreateAdmin";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import TaskDetail from "./pages/TaskDetail";
 import UserDashboard from "./pages/UserDashboard";
+import KanbanBoard from "./pages/KanbanBoard";
+import CalendarView from "./pages/CalendarView";
 
 import "./App.css";
 
@@ -142,7 +144,7 @@ function App() {
 
 
           {/* =================================
-              ADMIN TASKS
+               ADMIN TASKS
           ================================= */}
 
           <Route
@@ -150,6 +152,24 @@ function App() {
             element={
               <ProtectedRoute allowedRole="admin">
                 <AdminTasks />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/kanban"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <KanbanBoard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/calendar"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <CalendarView />
               </ProtectedRoute>
             }
           />
