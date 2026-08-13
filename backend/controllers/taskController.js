@@ -11,6 +11,93 @@ const {
 } = require("../services/emailService");
 
 // =========================
+// Helper: Check for circular dependencies
+// =========================
+const hasCircularDependency = async (taskId, prerequisiteId) => {
+  // Check if adding prerequisiteId as a dependency of taskId would create a cycle
+  // This means checking if taskId is already a prerequisite of prerequisiteId (directly or transitively)
+  
+  const visited = new Set();
+  
+  const checkDependencies = async (currentTaskId) => {
+    if (visited.has(currentTaskId.toString())) {
+      return false; // Already checked, no cycle found in this path
+    }
+    
+    visited.add(currentTaskId.toString());
+    
+    if (currentTaskId.toString() === taskId.toString()) {
+      return true; // Found a cycle
+    }
+    
+    const currentTask = await Task.findById(currentTaskId).select("prerequisites");
+    if (!currentTask || !currentTask.prerequisites || currentTask.prerequisites.length === 0) {
+      return false;
+    }
+    
+    for (const prereqId of currentTask.prerequisites) {
+      if (await checkDependencies(prereqId)) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+  
+  return await checkDependencies(prerequisiteId);
+};
+
+// =========================
+// Helper: Get all prerequisite tasks (with full details)
+// =========================
+const getPrerequisiteDetails = async (taskId) => {
+  const task = await Task.findById(taskId)
+    .populate({
+      path: "prerequisites",
+      select: "title status priority dueDate assignedTo",
+      populate: {
+        path: "assignedTo",
+        select: "name email",
+      },
+    });
+  
+  return task?.prerequisites || [];
+};
+
+// =========================
+// Helper: Check if all prerequisites are completed
+// =========================
+const areAllPrerequisitesCompleted = async (taskId) => {
+  const task = await Task.findById(taskId).select("prerequisites");
+  
+  if (!task || !task.prerequisites || task.prerequisites.length === 0) {
+    return true; // No prerequisites = all completed
+  }
+  
+  const prerequisites = await Task.find({ _id: { $in: task.prerequisites } }).select("status");
+  
+  return prerequisites.every((prereq) => prereq.status === "Done");
+};
+
+// =========================
+// Helper: Get incomplete prerequisites
+// =========================
+const getIncompletePrerequisites = async (taskId) => {
+  const task = await Task.findById(taskId).select("prerequisites");
+  
+  if (!task || !task.prerequisites || task.prerequisites.length === 0) {
+    return [];
+  }
+  
+  const incompletePrereqs = await Task.find({
+    _id: { $in: task.prerequisites },
+    status: { $ne: "Done" },
+  }).select("title status priority assignedTo");
+  
+  return incompletePrereqs;
+};
+
+// =========================
 // Create Task
 // POST /api/tasks
 // =========================
@@ -191,6 +278,25 @@ const updateTask = async (req, res) => {
       publicId:   file.filename || null,
     }));
 
+    // ── Validate dependencies before status change ──
+    const newStatus = req.body.status;
+    if (newStatus && newStatus !== previousStatus && newStatus !== "Pending") {
+      // Trying to change to "In Progress" or "Done"
+      const incompletePrereqs = await getIncompletePrerequisites(id);
+      
+      if (incompletePrereqs.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot change status to "${newStatus}" - ${incompletePrereqs.length} prerequisite task(s) must be completed first`,
+          incompletePrerequisites: incompletePrereqs.map((p) => ({
+            id: p._id,
+            title: p.title,
+            status: p.status,
+          })),
+        });
+      }
+    }
+
     const updatedTask = await Task.findByIdAndUpdate(
       id,
       {
@@ -283,10 +389,21 @@ const deleteTask = async (req, res) => {
 // =========================
 const getTaskById = async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id).populate("assignedTo", "name email");
+    const task = await Task.findById(req.params.id)
+      .populate("assignedTo", "name email")
+      .populate({
+        path: "prerequisites",
+        select: "title status priority dueDate assignedTo",
+        populate: {
+          path: "assignedTo",
+          select: "name email",
+        },
+      });
+    
     if (!task) {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
+    
     res.status(200).json({ success: true, data: task });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -477,5 +594,145 @@ const getUserDashboardStats = async (req, res) => {
   }
 };
 
+// =========================
+// Add Prerequisites to Task
+// POST /api/tasks/:id/prerequisites
+// =========================
+const addPrerequisites = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { prerequisiteIds } = req.body;
+
+    if (!Array.isArray(prerequisiteIds) || prerequisiteIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "prerequisiteIds must be a non-empty array",
+      });
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    // Only admins can add prerequisites
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admins can add task prerequisites",
+      });
+    }
+
+    // Validate each prerequisite
+    for (const prereqId of prerequisiteIds) {
+      // Check if prerequisite exists
+      const prereqTask = await Task.findById(prereqId);
+      if (!prereqTask) {
+        return res.status(404).json({
+          success: false,
+          message: `Prerequisite task ${prereqId} not found`,
+        });
+      }
+
+      // Prevent self-dependency
+      if (prereqId.toString() === id.toString()) {
+        return res.status(400).json({
+          success: false,
+          message: "A task cannot be its own prerequisite",
+        });
+      }
+
+      // Check for circular dependency
+      const isCircular = await hasCircularDependency(id, prereqId);
+      if (isCircular) {
+        return res.status(400).json({
+          success: false,
+          message: `Adding this prerequisite would create a circular dependency`,
+        });
+      }
+
+      // Prevent duplicate prerequisites
+      if (task.prerequisites.some((p) => p.toString() === prereqId.toString())) {
+        return res.status(400).json({
+          success: false,
+          message: `This task is already a prerequisite`,
+        });
+      }
+    }
+
+    // Add prerequisites (avoiding duplicates)
+    const newPrerequisites = prerequisiteIds.filter(
+      (id) => !task.prerequisites.some((p) => p.toString() === id.toString())
+    );
+    
+    task.prerequisites.push(...newPrerequisites);
+    await task.save();
+
+    const updatedTask = await task.populate({
+      path: "prerequisites",
+      select: "title status priority dueDate assignedTo",
+      populate: {
+        path: "assignedTo",
+        select: "name email",
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Prerequisites added successfully",
+      data: updatedTask,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// =========================
+// Remove Prerequisite from Task
+// DELETE /api/tasks/:id/prerequisites/:prerequisiteId
+// =========================
+const removePrerequisite = async (req, res) => {
+  try {
+    const { id, prerequisiteId } = req.params;
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    // Only admins can remove prerequisites
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admins can remove task prerequisites",
+      });
+    }
+
+    // Remove the prerequisite
+    task.prerequisites = task.prerequisites.filter(
+      (p) => p.toString() !== prerequisiteId.toString()
+    );
+
+    await task.save();
+
+    const updatedTask = await task.populate({
+      path: "prerequisites",
+      select: "title status priority dueDate assignedTo",
+      populate: {
+        path: "assignedTo",
+        select: "name email",
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Prerequisite removed successfully",
+      data: updatedTask,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // ── Single export at the bottom ───────────────────────────────────────────────
-module.exports = { createTask, getTasks, getTaskById, updateTask, deleteTask, getAnalytics, deleteAttachment, getUserDashboardStats };
+module.exports = { createTask, getTasks, getTaskById, updateTask, deleteTask, getAnalytics, deleteAttachment, getUserDashboardStats, addPrerequisites, removePrerequisite };

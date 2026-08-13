@@ -12,6 +12,8 @@ function AdminCreateTask() {
     priority: "Medium", dueDate: "", assignedTo: "",
   });
   const [files,        setFiles]        = useState([]);
+  const [prerequisites, setPrerequisites] = useState([]);
+  const [availableTasks, setAvailableTasks] = useState([]);
   const [loading,      setLoading]      = useState(false);
   const [usersLoading, setUsersLoading] = useState(true);
 
@@ -27,7 +29,22 @@ function AdminCreateTask() {
     }
   };
 
+  const fetchAvailableTasks = async () => {
+    try {
+      const res = await API.get("/tasks?limit=1000");
+      // Filter out tasks that are already in prerequisites
+      const filtered = res.data.data.filter((t) => !prerequisites.some((p) => p._id === t._id));
+      setAvailableTasks(filtered);
+    } catch (err) {
+      console.error("Failed to fetch tasks:", err);
+    }
+  };
+
   useEffect(() => { fetchUsers(); }, []);
+  
+  useEffect(() => { 
+    fetchAvailableTasks(); 
+  }, [prerequisites]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -38,6 +55,16 @@ function AdminCreateTask() {
   };
 
   const removeFile = (i) => setFiles((prev) => prev.filter((_, idx) => idx !== i));
+
+  const addPrerequisite = (task) => {
+    if (!prerequisites.some((p) => p._id === task._id)) {
+      setPrerequisites((prev) => [...prev, task]);
+    }
+  };
+
+  const removePrerequisite = (taskId) => {
+    setPrerequisites((prev) => prev.filter((p) => p._id !== taskId));
+  };
 
   const formatSize = (bytes) => {
     if (bytes < 1024) return bytes + " B";
@@ -51,7 +78,14 @@ function AdminCreateTask() {
     if (!formData.assignedTo)    { alert("Please select a user");   return; }
     try {
       setLoading(true);
-      await createTaskWithFiles(formData, files);
+      const task = await createTaskWithFiles(formData, files);
+      
+      // Add prerequisites if any were selected
+      if (prerequisites.length > 0) {
+        const prerequisiteIds = prerequisites.map((p) => p._id);
+        await API.post(`/tasks/${task.data._id}/prerequisites`, { prerequisiteIds });
+      }
+      
       navigate("/admin/tasks");
     } catch (err) {
       alert(err.response?.data?.message || "Failed to assign task");
@@ -125,6 +159,80 @@ function AdminCreateTask() {
                 <small className="form-help">No users found. Create one from Manage Users.</small>
               )}
             </div>
+          </div>
+
+          {/* Prerequisites/Dependencies */}
+          <div className="form-group">
+            <label>Prerequisites <span className="form-help-inline">(optional)</span></label>
+            <p style={{ fontSize: 13, color: "var(--gray-500)", marginBottom: 10 }}>
+              Select tasks that must be completed before this task can be moved to "In Progress" or "Done"
+            </p>
+            
+            {/* Available tasks dropdown */}
+            {availableTasks.length > 0 && (
+              <select
+                className="form-select"
+                onChange={(e) => {
+                  const taskId = e.target.value;
+                  if (taskId) {
+                    const task = availableTasks.find((t) => t._id === taskId);
+                    if (task) addPrerequisite(task);
+                    e.target.value = "";
+                  }
+                }}
+                defaultValue=""
+                style={{ marginBottom: 10 }}
+              >
+                <option value="">+ Add prerequisite task</option>
+                {availableTasks.map((t) => (
+                  <option key={t._id} value={t._id}>
+                    {t.title} ({t.status})
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* Selected prerequisites */}
+            {prerequisites.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {prerequisites.map((p) => (
+                  <div
+                    key={p._id}
+                    style={{
+                      padding: 10,
+                      border: "1px solid var(--gray-200)",
+                      borderRadius: "var(--radius)",
+                      backgroundColor: "var(--gray-50)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{p.title}</div>
+                      <div style={{ fontSize: 11, color: "var(--gray-500)", marginTop: 2 }}>
+                        Status: {p.status}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removePrerequisite(p._id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "var(--danger)",
+                        cursor: "pointer",
+                        fontSize: 16,
+                        padding: 4,
+                      }}
+                      title="Remove prerequisite"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Attachments */}

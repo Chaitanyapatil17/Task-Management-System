@@ -36,6 +36,14 @@ const taskSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Task prerequisites/dependencies
+    prerequisites: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Task",
+      },
+    ],
+
     // File attachments
     attachments: [
       {

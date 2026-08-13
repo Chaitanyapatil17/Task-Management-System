@@ -1928,3 +1928,37 @@ a{text-decoration:none;color:inherit;}
   font-weight: 600;
   color: var(--gray-900);
 }
+
+
+/* ========================================
+   TASK DEPENDENCIES STYLING
+======================================== */
+.form-select {
+  padding: 9px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--gray-700);
+  background: var(--gray-50);
+  outline: none;
+  cursor: pointer;
+  transition: all .2s ease;
+  width: 100%;
+}
+
+.form-select:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, .1);
+}
+
+.form-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-help-inline {
+  font-size: 11px;
+  color: var(--gray-500);
+  font-weight: 400;
+}

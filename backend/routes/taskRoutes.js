@@ -8,6 +8,8 @@ const {
   getAnalytics,
   deleteAttachment,
   getUserDashboardStats,
+  addPrerequisites,
+  removePrerequisite,
 } = require("../controllers/taskController");
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../config/multer");
@@ -28,5 +30,9 @@ router.delete("/:id", protect, deleteTask);
 
 // Attachment management
 router.delete("/:id/attachments/:attachmentId", protect, deleteAttachment);
+
+// Prerequisites management
+router.post("/:id/prerequisites", protect, addPrerequisites);
+router.delete("/:id/prerequisites/:prerequisiteId", protect, removePrerequisite);
 
 module.exports = router;

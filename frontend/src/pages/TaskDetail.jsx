@@ -355,6 +355,67 @@ export default function TaskDetail() {
               </div>
             )}
 
+            {/* Prerequisites/Dependencies */}
+            {task.prerequisites && task.prerequisites.length > 0 && (
+              <div className="td-meta-prerequisites">
+                <span className="td-meta-label" style={{ display: "block", marginBottom: 8 }}>
+                  Prerequisites ({task.prerequisites.length})
+                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {task.prerequisites.map((prereq) => {
+                    const isComplete = prereq.status === "Done";
+                    const statusColor = isComplete ? "#10b981" : prereq.status === "In Progress" ? "#f59e0b" : "#6366f1";
+                    const statusBg = isComplete ? "#d1fae5" : prereq.status === "In Progress" ? "#fef3c7" : "#eef2ff";
+                    
+                    return (
+                      <div
+                        key={prereq._id}
+                        style={{
+                          padding: 10,
+                          border: `1px solid var(--gray-200)`,
+                          borderRadius: "var(--radius)",
+                          backgroundColor: isComplete ? "rgba(16, 185, 129, 0.05)" : "var(--gray-50)",
+                          opacity: isComplete ? 1 : 0.8,
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isComplete ? "#10b981" : "#6366f1"} strokeWidth="2" style={{ opacity: 0.6 }}>
+                            <path d="M9 11l3 3L22 4"/>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                          </svg>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>
+                              {prereq.title}
+                            </div>
+                            <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
+                              Assigned to: {prereq.assignedTo?.name || "Unknown"}
+                            </div>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 600,
+                              padding: "3px 8px",
+                              borderRadius: 4,
+                              backgroundColor: statusBg,
+                              color: statusColor,
+                            }}
+                          >
+                            {prereq.status}
+                          </span>
+                        </div>
+                        {prereq.dueDate && (
+                          <div style={{ fontSize: 11, color: "var(--text-3)" }}>
+                            Due: {new Date(prereq.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
 
