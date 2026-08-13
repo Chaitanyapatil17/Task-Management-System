@@ -1,44 +1,32 @@
 const express = require("express");
-
 const {
   createTask,
   getTasks,
   getTaskById,
   updateTask,
   deleteTask,
+  getAnalytics,
+  deleteAttachment,
+  getUserDashboardStats,
 } = require("../controllers/taskController");
-
-const {
-  protect,
-  adminOnly,
-} = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
+const upload = require("../config/multer");
 
 const router = express.Router();
 
+// Dashboard stats route — must be before /:id
+router.get("/dashboard/stats", protect, getUserDashboardStats);
 
-// ========================================
-// USER + ADMIN
-// ========================================
+// Analytics must be before /:id so it isn't matched as an id
+router.get("/analytics", protect, getAnalytics);
 
-// Get all tasks
-router.get("/", protect, getTasks);
-
-// Get single task
+router.get("/",    protect, getTasks);
 router.get("/:id", protect, getTaskById);
+router.post("/",   protect, upload.array("attachments", 5), createTask);
+router.put("/:id", protect, upload.array("attachments", 5), updateTask);
+router.delete("/:id", protect, deleteTask);
 
-// Create task
-router.post("/", protect, createTask);
-
-
-// ========================================
-// ADMIN ONLY
-// ========================================
-
-// Update task
-router.put("/:id", protect, adminOnly, updateTask);
-
-// Delete task
-router.delete("/:id", protect, adminOnly, deleteTask);
-
+// Attachment management
+router.delete("/:id/attachments/:attachmentId", protect, deleteAttachment);
 
 module.exports = router;

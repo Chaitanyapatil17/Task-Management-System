@@ -16,16 +16,30 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Optional — Google OAuth users have no password
     password: {
       type: String,
-      required: true,
       minlength: 6,
+      default: null,
     },
 
     role: {
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+
+    // Populated for Google OAuth accounts
+    googleId: {
+      type: String,
+      default: null,
+      sparse: true,   // allows null for non-Google accounts
+    },
+
+    // Profile picture from Google
+    avatar: {
+      type: String,
+      default: null,
     },
   },
   {
