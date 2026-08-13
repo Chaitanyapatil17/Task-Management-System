@@ -603,10 +603,27 @@ const addPrerequisites = async (req, res) => {
     const { id } = req.params;
     const { prerequisiteIds } = req.body;
 
-    if (!Array.isArray(prerequisiteIds) || prerequisiteIds.length === 0) {
+    // Validate prerequisiteIds
+    if (!Array.isArray(prerequisiteIds)) {
       return res.status(400).json({
         success: false,
-        message: "prerequisiteIds must be a non-empty array",
+        message: "prerequisiteIds must be an array",
+      });
+    }
+
+    if (prerequisiteIds.length === 0) {
+      // No prerequisites to add, just return the task
+      const task = await Task.findById(id)
+        .populate("assignedTo", "name email")
+        .populate({
+          path: "prerequisites",
+          select: "title status priority dueDate assignedTo",
+          populate: { path: "assignedTo", select: "name email" },
+        });
+      return res.status(200).json({
+        success: true,
+        message: "No prerequisites to add",
+        data: task,
       });
     }
 
@@ -623,8 +640,14 @@ const addPrerequisites = async (req, res) => {
       });
     }
 
-    // Validate each prerequisite
+    // Validate and filter prerequisite IDs
+    const validPrerequisiteIds = [];
     for (const prereqId of prerequisiteIds) {
+      // Skip if empty or invalid ObjectId
+      if (!prereqId || typeof prereqId !== "string" || prereqId.trim() === "") {
+        continue;
+      }
+
       // Check if prerequisite exists
       const prereqTask = await Task.findById(prereqId);
       if (!prereqTask) {
@@ -652,21 +675,16 @@ const addPrerequisites = async (req, res) => {
       }
 
       // Prevent duplicate prerequisites
-      if (task.prerequisites.some((p) => p.toString() === prereqId.toString())) {
-        return res.status(400).json({
-          success: false,
-          message: `This task is already a prerequisite`,
-        });
+      if (!task.prerequisites.some((p) => p.toString() === prereqId.toString())) {
+        validPrerequisiteIds.push(prereqId);
       }
     }
 
-    // Add prerequisites (avoiding duplicates)
-    const newPrerequisites = prerequisiteIds.filter(
-      (id) => !task.prerequisites.some((p) => p.toString() === id.toString())
-    );
-    
-    task.prerequisites.push(...newPrerequisites);
-    await task.save();
+    // Add valid prerequisites
+    if (validPrerequisiteIds.length > 0) {
+      task.prerequisites.push(...validPrerequisiteIds);
+      await task.save();
+    }
 
     const updatedTask = await task.populate({
       path: "prerequisites",

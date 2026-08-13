@@ -57,8 +57,9 @@ function AdminCreateTask() {
   const removeFile = (i) => setFiles((prev) => prev.filter((_, idx) => idx !== i));
 
   const addPrerequisite = (task) => {
+    // Ensure we're storing the full task object
     if (!prerequisites.some((p) => p._id === task._id)) {
-      setPrerequisites((prev) => [...prev, task]);
+      setPrerequisites((prev) => [...prev, { ...task }]);
     }
   };
 
@@ -78,12 +79,13 @@ function AdminCreateTask() {
     if (!formData.assignedTo)    { alert("Please select a user");   return; }
     try {
       setLoading(true);
-      const task = await createTaskWithFiles(formData, files);
+      const taskResponse = await createTaskWithFiles(formData, files);
+      const taskId = taskResponse.data.data._id;
       
       // Add prerequisites if any were selected
       if (prerequisites.length > 0) {
         const prerequisiteIds = prerequisites.map((p) => p._id);
-        await API.post(`/tasks/${task.data._id}/prerequisites`, { prerequisiteIds });
+        await API.post(`/tasks/${taskId}/prerequisites`, { prerequisiteIds });
       }
       
       navigate("/admin/tasks");
