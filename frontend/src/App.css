@@ -3198,3 +3198,68 @@ button:active, .btn-hero-primary:active, .btn-indigo-primary:active, .primary-bu
   }
 }
 
+/* ========================================
+   KANBAN PAGINATION STYLING
+======================================== */
+.kanban-page-size-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-column-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  margin-top: auto;
+  border-top: 1px solid var(--gray-200);
+}
+
+.btn-kanban-page {
+  padding: 5px 12px;
+  border: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  color: var(--gray-700);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-kanban-page:hover:not(:disabled) {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-color: var(--primary);
+}
+
+.btn-kanban-page:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.kanban-page-indicator {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-600);
+}
+
+/* Dark mode overrides for Kanban Pagination */
+[data-theme="dark"] .kanban-column-pagination {
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .btn-kanban-page {
+  background: var(--gray-800);
+  color: var(--gray-200);
+  border-color: var(--gray-700);
+}
+
+[data-theme="dark"] .btn-kanban-page:hover:not(:disabled) {
+  background: #064e3b;
+  color: #a7f3d0;
+  border-color: var(--primary);
+}
+
+
