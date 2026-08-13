@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/taskApi";
+import FileViewerModal from "./FileViewerModal";
+import { getInlineFileUrl } from "../utils/fileUtils";
 
 // Priority config: colour + label
 const PRIORITY_CFG = {
@@ -26,6 +28,7 @@ function getDueInfo(dueDate, status) {
 function TaskItem({ task, fetchTasks }) {
   const navigate = useNavigate();
   const [showAttachments, setShowAttachments] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const user    = JSON.parse(localStorage.getItem("user") || "{}");
   const isAdmin = user.role === "admin";
@@ -59,6 +62,10 @@ function TaskItem({ task, fetchTasks }) {
 
   return (
     <div className={`task-card ${dueInfo?.cls === "due-overdue" ? "task-card-overdue" : ""}`}>
+      {/* File Viewer Modal */}
+      {selectedFile && (
+        <FileViewerModal file={selectedFile} onClose={() => setSelectedFile(null)} />
+      )}
 
       <div className="task-card-top">
         {/* Title row: title + priority + status */}
@@ -127,10 +134,14 @@ function TaskItem({ task, fetchTasks }) {
           {attachments.map((a, i) => (
             <a
               key={i}
-              href={a.url || `http://localhost:5000/uploads/${a.storedName}`}
+              href={getInlineFileUrl(a)}
               target="_blank"
               rel="noreferrer"
               className="attachment-chip"
+              onClick={(e) => {
+                e.preventDefault();
+                setSelectedFile(a);
+              }}
             >
               📄 {a.filename}
               {a.size && <span className="attachment-size">{formatSize(a.size)}</span>}

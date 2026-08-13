@@ -18,8 +18,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve uploaded files statically
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve uploaded files statically with inline disposition header
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"), {
+    setHeaders: (res) => {
+      res.setHeader("Content-Disposition", "inline");
+    },
+  })
+);
 
 app.get("/", (req, res) => {
   res.send("Task Management API Running...");

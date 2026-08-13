@@ -15,7 +15,7 @@ function useDebounce(value, delay = 400) {
 const STAT_CARDS = [
   { key: "total",      label: "Total Tasks",  icon: "📋", color: "blue"   },
   { key: "pending",    label: "Pending",      icon: "⏳", color: "yellow" },
-  { key: "inProgress", label: "In Progress",  icon: "🔄", color: "purple" },
+  { key: "inProgress", label: "In Progress",  icon: "🔄", color: "blue" },
   { key: "done",       label: "Completed",    icon: "✅", color: "green"  },
 ];
 

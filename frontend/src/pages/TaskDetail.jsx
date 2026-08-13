@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import API from "../services/taskApi";
+import FileViewerModal from "../components/FileViewerModal";
+import { getInlineFileUrl } from "../utils/fileUtils";
 
 /* ── helpers ─────────────────────────────────────────────────── */
 const PRIORITY_CFG = {
@@ -71,6 +73,7 @@ export default function TaskDetail() {
   const [posting,      setPosting]      = useState(false);
   const [error,        setError]        = useState("");
   const [deletingAtt,  setDeletingAtt]  = useState(null); // attachmentId being deleted
+  const [selectedFile, setSelectedFile] = useState(null);
 
   /* fetch task */
   useEffect(() => {
@@ -315,6 +318,11 @@ export default function TaskDetail() {
               <span className="td-meta-value">{fmtDate(task.updatedAt)}</span>
             </div>
 
+            {/* File Viewer Modal */}
+            {selectedFile && (
+              <FileViewerModal file={selectedFile} onClose={() => setSelectedFile(null)} />
+            )}
+
             {/* Attachments */}
             {task.attachments?.length > 0 && (
               <div className="td-meta-attachments">
@@ -324,11 +332,15 @@ export default function TaskDetail() {
                 {task.attachments.map((a) => (
                   <div key={a._id} className="td-attachment-row">
                     <a
-                      href={a.url || `http://localhost:5000/uploads/${a.storedName}`}
+                      href={getInlineFileUrl(a)}
                       target="_blank"
                       rel="noreferrer"
                       className="attachment-chip"
                       style={{ flex: 1 }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelectedFile(a);
+                      }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.64 16.2a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
@@ -356,13 +368,18 @@ export default function TaskDetail() {
             )}
 
             {/* Prerequisites/Dependencies */}
-            {task.prerequisites && task.prerequisites.length > 0 && (
+            {task.prerequisites && Array.isArray(task.prerequisites) && task.prerequisites.length > 0 && (
               <div className="td-meta-prerequisites">
                 <span className="td-meta-label" style={{ display: "block", marginBottom: 8 }}>
                   Prerequisites ({task.prerequisites.length})
                 </span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {task.prerequisites.map((prereq) => {
+                    // Defensive checks
+                    if (!prereq || !prereq._id) {
+                      return null;
+                    }
+
                     const isComplete = prereq.status === "Done";
                     const statusColor = isComplete ? "#10b981" : prereq.status === "In Progress" ? "#f59e0b" : "#6366f1";
                     const statusBg = isComplete ? "#d1fae5" : prereq.status === "In Progress" ? "#fef3c7" : "#eef2ff";
@@ -372,23 +389,23 @@ export default function TaskDetail() {
                         key={prereq._id}
                         style={{
                           padding: 10,
-                          border: `1px solid var(--gray-200)`,
+                          border: "1px solid var(--gray-200)",
                           borderRadius: "var(--radius)",
                           backgroundColor: isComplete ? "rgba(16, 185, 129, 0.05)" : "var(--gray-50)",
                           opacity: isComplete ? 1 : 0.8,
                         }}
                       >
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isComplete ? "#10b981" : "#6366f1"} strokeWidth="2" style={{ opacity: 0.6 }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={isComplete ? "#10b981" : "#6366f1"} strokeWidth="2" style={{ opacity: 0.6, flexShrink: 0 }}>
                             <path d="M9 11l3 3L22 4"/>
                             <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                           </svg>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)" }}>
-                              {prereq.title}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-1)", wordBreak: "break-word" }}>
+                              {prereq.title || "Untitled Task"}
                             </div>
                             <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 2 }}>
-                              Assigned to: {prereq.assignedTo?.name || "Unknown"}
+                              Assigned to: {prereq.assignedTo?.name || "Unknown User"}
                             </div>
                           </div>
                           <span
@@ -399,13 +416,15 @@ export default function TaskDetail() {
                               borderRadius: 4,
                               backgroundColor: statusBg,
                               color: statusColor,
+                              flexShrink: 0,
+                              whiteSpace: "nowrap",
                             }}
                           >
-                            {prereq.status}
+                            {prereq.status || "Unknown"}
                           </span>
                         </div>
                         {prereq.dueDate && (
-                          <div style={{ fontSize: 11, color: "var(--text-3)" }}>
+                          <div style={{ fontSize: 11, color: "var(--text-3)", marginTop: 4 }}>
                             Due: {new Date(prereq.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                           </div>
                         )}
