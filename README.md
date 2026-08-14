@@ -20,7 +20,18 @@ A modern, full-stack Task Management System built with React, Node.js, Express, 
   - File attachments (via Cloudinary)
   - Task comments for collaboration
   - Real-time notifications
-- **Task Details Page** - View full task information with attachments and comments
+- **Task Details Page** - View full task information with attachments, comments, and prerequisites
+- **Kanban Board** - Visual task organization with drag-and-drop and per-column pagination
+- **Calendar View** - Task scheduling and due date visualization
+- **Notification Center** - Centralized notification management with real-time updates
+
+### Task Dependencies (NEW!)
+- **Prerequisite Management** - Admin can assign one or more prerequisite tasks to a task
+- **Dependency Validation** - Tasks cannot move to "In Progress"/"Done" if prerequisites incomplete
+- **Circular Dependency Prevention** - System prevents circular task dependencies (A → B → A)
+- **Visual Indicators** - Color-coded status badges show prerequisite completion status
+- **Dependency Tracking** - See all prerequisite tasks and dependent tasks on task details page
+- **Clear Error Messages** - User-friendly messages when dependencies are incomplete
 
 ### Admin Features
 - **Admin Dashboard** - System-wide analytics:
@@ -35,11 +46,13 @@ A modern, full-stack Task Management System built with React, Node.js, Express, 
   - Delete users (except self)
 - **Manage Tasks**
   - Create and assign tasks to users
+  - Set task prerequisites and manage dependencies
   - Update task status and details
   - View all system tasks with filters
   - Search and pagination support
 - **Create Admin** - Secure admin account creation with role enforcement
 - **Analytics Page** - Detailed charts and statistics on task performance
+- **AI Assistant** - AI-powered chat bot for task recommendations and assistance
 
 ### Security Features
 - **JWT Authentication** - Secure token-based authentication (1-day expiry)
@@ -48,16 +61,21 @@ A modern, full-stack Task Management System built with React, Node.js, Express, 
 - **Protected Routes** - Frontend route protection with ProtectedRoute component
 - **Admin Middleware** - Backend protection with `protect` and `adminOnly` middleware
 - **Duplicate Email Prevention** - Unique email validation on registration and user creation
+- **Circular Dependency Prevention** - Algorithm prevents circular task dependencies
 
 ### Additional Features
+- **AI Chat Bot** - Intelligent assistant for task recommendations and help
+- **Kanban Board** - Visual task organization with drag-and-drop and pagination
+- **Calendar View** - Task scheduling and due date visualization
+- **Task Comments** - Collaborate on tasks with real-time comments
+- **Real-time Notifications** - Socket.IO integration for instant updates
+- **Reminder Scheduler** - Automatic reminders for upcoming tasks
 - **Dark Mode Support** - Theme toggle for comfortable usage
 - **Responsive Design** - Mobile-friendly UI
 - **File Attachments** - Upload files to Cloudinary, store URLs in MongoDB
 - **Email Notifications** - Task assignment and completion emails
 - **Google OAuth** - One-click sign-in with Google (optional)
 - **Sidebar Collapse** - Toggle sidebar for better space utilization
-- **Task Comments** - Collaborate on tasks with threaded comments
-- **Real-time Notifications** - In-app notification system
 
 ---
 
@@ -182,8 +200,8 @@ simple-task-management-system/
 │   ├── middleware/
 │   │   └── authMiddleware.js     # JWT verification & admin check
 │   ├── models/
-│   │   ├── User.js               # User schema
-│   │   ├── Task.js               # Task schema with attachments
+│   │   ├── User.js               # User schema with admin/user roles
+│   │   ├── Task.js               # Task schema with attachments and prerequisites
 │   │   ├── Notification.js       # In-app notifications
 │   │   └── Comment.js            # Task comments
 │   ├── routes/
@@ -204,7 +222,10 @@ simple-task-management-system/
 │   │   │   ├── ProtectedRoute.jsx # Role-based route protection
 │   │   │   ├── TaskForm.jsx      # Reusable task form
 │   │   │   ├── TaskItem.jsx      # Task card component
-│   │   │   └── TaskList.jsx      # Task list display
+│   │   │   ├── TaskList.jsx      # Task list display
+│   │   │   ├── AIChatBot.jsx     # AI assistant chat bot
+│   │   │   ├── FileViewerModal.jsx # File preview modal
+│   │   │   └── PrerequisitesPicker.jsx # Task dependency selector
 │   │   ├── pages/
 │   │   │   ├── Login.jsx         # Login page
 │   │   │   ├── Register.jsx      # User registration
@@ -213,12 +234,14 @@ simple-task-management-system/
 │   │   │   ├── UserDashboard.jsx # User dashboard with stats
 │   │   │   ├── AdminDashboard.jsx # Admin dashboard with analytics
 │   │   │   ├── AdminTasks.jsx    # Admin task management
-│   │   │   ├── AdminCreateTask.jsx # Admin assign task
-│   │   │   ├── AdminUsers.jsx    # Manage users
+│   │   │   ├── AdminCreateTask.jsx # Admin assign task with prerequisites
+│   │   │   ├── AdminUsers.jsx    # Manage users and admins
 │   │   │   ├── CreateUser.jsx    # Create user
-│   │   │   ├── CreateAdmin.jsx   # Create admin (NEW)
 │   │   │   ├── AdminAnalytics.jsx # Detailed analytics
-│   │   │   └── TaskDetail.jsx    # Task detail page
+│   │   │   ├── TaskDetail.jsx    # Task detail with comments and dependencies
+│   │   │   ├── KanbanBoard.jsx   # Kanban view with drag-drop
+│   │   │   ├── CalendarView.jsx  # Calendar task scheduling
+│   │   │   └── NotificationCenter.jsx # Notification management
 │   │   ├── services/
 │   │   │   └── taskApi.js        # Axios API client
 │   │   ├── App.jsx               # Main app component
@@ -289,6 +312,61 @@ simple-task-management-system/
 | GET | `/api/tasks/dashboard/stats` | Get dashboard statistics | JWT |
 | GET | `/api/tasks/analytics` | Get analytics data | JWT + Admin |
 | DELETE | `/api/tasks/:id/attachments/:attachmentId` | Delete attachment | JWT |
+| POST | `/api/tasks/:id/prerequisites` | Add prerequisite tasks | JWT + Admin |
+| DELETE | `/api/tasks/:id/prerequisites/:prerequisiteId` | Remove prerequisite | JWT + Admin |
+
+---
+
+## 📋 Task Dependencies Feature
+
+### Overview
+The Task Dependencies feature allows admins to create prerequisite relationships between tasks. This ensures tasks are completed in the correct order and prevents status changes when dependencies are incomplete.
+
+### Key Features
+- **Add Prerequisites** - Admin can assign one or more prerequisite tasks when creating/editing a task
+- **Dependency Validation** - System prevents moving a task to "In Progress" or "Done" if prerequisites incomplete
+- **Circular Dependency Prevention** - Automatic detection prevents circular dependencies (A → B → A)
+- **Visual Status Indicators** - Prerequisites shown with color-coded completion badges:
+  - 🟢 Green: Completed
+  - 🟡 Yellow: In Progress
+  - 🔴 Red: Pending
+- **Error Messages** - Clear messages explain why a task cannot be moved if dependencies incomplete
+
+### Usage - Admin Creating a Task with Prerequisites
+1. Go to Admin → Assign Task
+2. Fill in task details (title, description, assignee, due date)
+3. In the "Prerequisites" section, click "Add Prerequisites"
+4. Select one or more existing tasks from the dropdown
+5. Submit - task created with dependencies
+6. Prerequisites displayed on Task Details page
+
+### Usage - Viewing Dependencies
+1. Go to a task's detail page
+2. Scroll to "Prerequisites" section
+3. See all prerequisite tasks with their current status
+4. See "Dependent Tasks" section (tasks that depend on this one)
+
+### Technical Implementation
+- **Backend Validation** - `hasCircularDependency()` function checks dependency tree
+- **Status Protection** - Cannot update task status if prerequisites incomplete
+- **API Validation** - Invalid prerequisite IDs rejected with 400 error
+- **Performance** - Efficient depth-first traversal for circular detection
+
+### Example API Usage
+
+**Add Prerequisites to a Task:**
+```bash
+curl -X POST http://localhost:5000/api/tasks/task-id-1/prerequisites \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"prerequisiteIds": ["task-id-2", "task-id-3"]}'
+```
+
+**Remove a Prerequisite:**
+```bash
+curl -X DELETE http://localhost:5000/api/tasks/task-id-1/prerequisites/task-id-2 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
 
 ---
 
@@ -332,6 +410,25 @@ simple-task-management-system/
 1. Login as admin
 2. Click "Analytics"
 3. See overall task statistics and trends
+
+### Test Task Dependencies
+1. Login as admin
+2. Create 2 tasks: "Design" and "Implementation" 
+3. Go to "Assign Task" and create a third task "Testing"
+4. In Prerequisites section, select "Design" and "Implementation"
+5. Submit - "Testing" task created with dependencies
+6. Try to mark "Testing" as "In Progress" → Should show error: "Cannot change status - prerequisites incomplete"
+7. Complete both "Design" and "Implementation"
+8. Now "Testing" can be moved to "In Progress" or "Done"
+9. Go to "Testing" task details → See prerequisites with green ✓ checkmarks
+10. Go to "Design" task details → See "Dependent Tasks" showing "Testing"
+
+### Test Circular Dependency Prevention
+1. Login as admin
+2. Create 3 tasks: A, B, C
+3. Set A → prerequisites: [B]
+4. Set B → prerequisites: [C]
+5. Try to set C → prerequisites: [A] → Should fail with: "Cannot add this prerequisite - would create circular dependency"
 
 ---
 
