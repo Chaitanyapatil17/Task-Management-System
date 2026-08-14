@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management System - Technical Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 3px solid #007bff;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1em;
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        h2 {
+            font-size: 1.8em;
+            color: #007bff;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        h3 {
+            font-size: 1.3em;
+            color: #333;
+            margin: 25px 0 15px 0;
+        }
+        
+        h4 {
+            font-size: 1.1em;
+            color: #555;
+            margin: 15px 0 10px 0;
+        }
+        
+        p {
+            margin: 10px 0;
+            text-align: justify;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+        
+        th {
+            background: #007bff;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+        }
+        
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        
+        tr:hover {
+            background: #f0f0f0;
+        }
+        
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background: #2b2b2b;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        
+        .json {
+            background: #f4f4f4;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        
+        .box {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+        
+        .box h4 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        .toc {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 5px;
+        }
+        
+        .toc h3 {
+            margin-top: 0;
+        }
+        
+        .toc ol {
+            margin-left: 20px;
+        }
+        
+        .toc li {
+            margin: 5px 0;
+        }
+        
+        .section {
+            page-break-inside: avoid;
+            margin-bottom: 30px;
+        }
+        
+        .feature-list {
+            columns: 2;
+            column-gap: 30px;
+        }
+        
+        .feature-list li {
+            margin: 10px 0;
+        }
+        
+        .tech-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .tech-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+        
+        .tech-table td:first-child {
+            font-weight: 600;
+            width: 20%;
+            background: #f9f9f9;
+        }
+        
+        .tech-table td:nth-child(2) {
+            width: 30%;
+            font-family: monospace;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .diagram {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        
+        .endpoint {
+            background: #f0f8ff;
+            border-left: 4px solid #28a745;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        
+        .success {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .warning {
+            color: #ffc107;
+            font-weight: 600;
+        }
+        
+        .danger {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                max-width: 100%;
+            }
+            
+            h2 {
+                page-break-after: avoid;
+            }
+            
+            table {
+                page-break-inside: avoid;
+            }
+            
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Task Management System</h1>
+            <p><strong>Complete Technical Documentation</strong></p>
+            <p><strong>Version 2.0</strong> | August 2026</p>
+            <p style="color: #999; margin-top: 15px;">React 19 + Node.js/Express + MongoDB + Socket.io</p>
+        </header>
+
+        <div class="toc">
+            <h3>📑 Quick Navigation</h3>
+            <ol>
+                <li><a href="#arch">Architecture Overview</a></li>
+                <li><a href="#tech">Tech Stack</a></li>
+                <li><a href="#db">Database Models</a></li>
+                <li><a href="#auth">Authentication & Authorization</a></li>
+                <li><a href="#api">API Endpoints</a></li>
+                <li><a href="#features">Core Features</a></li>
+                <li><a href="#realtime">Real-Time Features</a></li>
+                <li><a href="#email">Email & Notifications</a></li>
+                <li><a href="#files">File Management</a></li>
+                <li><a href="#pages">Frontend Pages</a></li>
+            </ol>
+        </div>
+
+        <!-- SECTION 1: ARCHITECTURE -->
+        <section id="arch" class="section">
+            <h2>1️⃣ Architecture Overview</h2>
+            
+            <h3>System Design</h3>
+            <div class="diagram">Frontend (React/Vite) on port 5173
+    ↓ (HTTPS + JWT Auth)
+Backend (Express/Node.js) on port 5000
+    ├── Controllers (Business Logic)
+    ├── Middleware (Authentication)
+    ├── Services (Email, AI, Reminders)
+    └── Database Layer (MongoDB)
+    ↓
+MongoDB Atlas + Cloudinary + Google OAuth</div>
+
+            <h3>Project Structure</h3>
+            <pre>backend/
+├── config/        → Database, Cloudinary, Multer
+├── controllers/   → Business logic (auth, task, notification)
+├── middleware/    → JWT verification, admin checks
+├── models/        → Mongoose schemas (User, Task, Comment, Notification)
+├── routes/        → Express route definitions
+├── services/      → Email, AI, reminder scheduler
+├── utils/         → Socket.io setup
+├── server.js      → Express app initialization
+└── .env           → Environment variables
+
+frontend/
+├── src/
+│   ├── pages/     → Dashboard, Tasks, Admin, Kanban, Calendar
+│   ├── components/→ Navbar, Sidebar, Comments, FileViewer, AIChatBot
+│   ├── services/  → Axios HTTP client
+│   ├── context/   → Socket provider
+│   └── App.jsx    → Router &amp; main layout
+└── package.json</pre>
+        </section>
+
+        <!-- SECTION 2: TECH STACK -->
+        <section id="tech" class="section">
+            <h2>2️⃣ Tech Stack</h2>
+            
+            <table class="tech-table">
+                <tr>
+                    <td colspan="3"><strong>Frontend</strong></td>
+                </tr>
+                <tr>
+                    <td>React</td>
+                    <td>19.2.8</td>
+                    <td>UI Framework</td>
+                </tr>
+                <tr>
+                    <td>Vite</td>
+                    <td>8.2.0</td>
+                    <td>Build tool &amp; dev server</td>
+                </tr>
+                <tr>
+                    <td>React Router</td>
+                    <td>7.18.2</td>
+                    <td>Client-side routing</td>
+                </tr>
+                <tr>
+                    <td>Axios</td>
+                    <td>1.19.0</td>
+                    <td>HTTP client</td>
+                </tr>
+                <tr>
+                    <td>Socket.io-client</td>
+                    <td>4.8.3</td>
+                    <td>Real-time communication</td>
+                </tr>
+                <tr>
+                    <td colspan="3"><strong>Backend</strong></td>
+                </tr>
+                <tr>
+                    <td>Node.js + Express</td>
+                    <td>5.2.1</td>
+                    <td>API server &amp; framework</td>
+                </tr>
+                <tr>
+                    <td>MongoDB + Mongoose</td>
+                    <td>9.9.1</td>
+                    <td>Database &amp; ODM</td>
+                </tr>
+                <tr>
+                    <td>JWT</td>
+                    <td>9.0.3</td>
+                    <td>Authentication tokens</td>
+                </tr>
+                <tr>
+                    <td>Socket.io</td>
+                    <td>4.8.3</td>
+                    <td>Real-time events</td>
+                </tr>
+                <tr>
+                    <td>Bcryptjs</td>
+                    <td>3.0.3</td>
+                    <td>Password hashing</td>
+                </tr>
+                <tr>
+                    <td>Nodemailer</td>
+                    <td>9.0.5</td>
+                    <td>Email service</td>
+                </tr>
+                <tr>
+                    <td>Cloudinary + Multer</td>
+                    <td>Latest</td>
+                    <td>File uploads</td>
+                </tr>
+                <tr>
+                    <td>Google GenAI</td>
+                    <td>0.24.1</td>
+                    <td>AI chatbot</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- SECTION 3: DATABASE MODELS -->
+        <section id="db" class="section">
+            <h2>3️⃣ Database Models</h2>
+            
+            <h3>User Model</h3>
+            <div class="json">{
+  name: String,
+  email: String (unique),
+  password: String (bcrypt hashed),
+  role: "user" | "admin",
+  googleId: String,
+  avatar: String,
+  notificationPreferences: {
+    emailAssignments, emailMentions, emailDueSoon,
+    emailOverdue, emailStatusChange, emailWeeklyDigest,
+    inAppAssignments, inAppMentions, inAppDueSoon,
+    inAppOverdue, inAppStatusChange
+  },
+  createdAt, updatedAt
+}</div>
+
+            <h3>Task Model</h3>
+            <div class="json">{
+  title, description,
+  status: "Pending" | "In Progress" | "Done",
+  priority: "Low" | "Medium" | "High" | "Critical",
+  assignedTo: ObjectId → User,
+  dueDate, startDate,
+  
+  prerequisites: [ObjectId → Task],
+  
+  attachments: [{
+    filename, url, publicId, size, mimetype,
+    uploadedAt, uploadedBy, version,
+    versionHistory: [{...}]
+  }],
+  
+  subtasks: [{title, completed, completedAt, assignedTo}],
+  tags: [String],
+  customFields: [{key, value}],
+  isArchived: Boolean,
+  
+  reminderSent: {
+    dueSoon: Boolean,
+    overdue: Boolean,
+    lastDueSoonAt: Date,
+    lastOverdueAt: Date
+  },
+  
+  createdAt, updatedAt
+}</div>
+
+            <h3>Comment Model (Activity Log)</h3>
+            <div class="json">{
+  task: ObjectId → Task,
+  author: ObjectId → User,
+  type: "comment" | "reply" | "status_change" |
+        "assignment" | "attachment" | "priority_change",
+  text: String,
+  mentions: [ObjectId → User],
+  reactions: [{emoji: String, users: [ObjectId]}],
+  parentComment: ObjectId → Comment,
+  isEdited: Boolean,
+  meta: {old: Any, new: Any},
+  createdAt, updatedAt
+}</div>
+
+            <h3>Notification Model</h3>
+            <div class="json">{
+  recipient: ObjectId → User,
+  sender: ObjectId → User,
+  type: "task_assigned" | "mention" | "comment_reply" |
+        "due_soon" | "overdue" | "weekly_digest",
+  message: String,
+  task: ObjectId → Task,
+  comment: ObjectId → Comment,
+  read: Boolean,
+  createdAt, updatedAt
+}</div>
+        </section>
+
+        <!-- SECTION 4: AUTHENTICATION -->
+        <section id="auth" class="section">
+            <h2>4️⃣ Authentication &amp; Authorization</h2>
+            
+            <h3>Registration Flow</h3>
+            <ol>
+                <li>User submits: name, email, password</li>
+                <li>Backend validates (no duplicates)</li>
+                <li>Password hashed with bcryptjs (salt rounds: 10)</li>
+                <li>User created in MongoDB with role: <span class="success">"user"</span></li>
+                <li>JWT signed: payload = {id, role}, expiry = 1 day</li>
+                <li>Token returned → localStorage → axios default header</li>
+            </ol>
+
+            <h3>Login Flow</h3>
+            <div class="box">
+                <strong>Email + Password</strong> → Find User by Email → <strong>bcrypt.compare()</strong> → Generate JWT → Return Token
+            </div>
+
+            <h3>Google OAuth Flow</h3>
+            <ol>
+                <li>Frontend: User clicks Google button (via @react-oauth/google)</li>
+                <li>Receive ID Token from Google</li>
+                <li>POST /api/auth/google with token</li>
+                <li>Backend: <code>OAuth2Client.verifyIdToken()</code></li>
+                <li>Extract: email, googleId, name, picture</li>
+                <li>Find or Create User (auto-account on first sign-in)</li>
+                <li>Generate JWT + Return</li>
+            </ol>
+
+            <h3>Role-Based Access Control</h3>
+            <table>
+                <tr>
+                    <th>Role</th>
+                    <th>Permissions</th>
+                </tr>
+                <tr>
+                    <td><strong>user</strong></td>
+                    <td>View own tasks, create comments, update profile, view kanban/calendar</td>
+                </tr>
+                <tr>
+                    <td><strong>admin</strong></td>
+                    <td>Create/assign tasks, manage users, set prerequisites, view analytics, create admins</td>
+                </tr>
+            </table>
+
+            <h3>Frontend Protection</h3>
+            <pre>&lt;ProtectedRoute requiredRole="admin"&gt;
+  &lt;AdminDashboard /&gt;
+&lt;/ProtectedRoute&gt;</pre>
+
+            <h3>Backend Middleware</h3>
+            <pre>router.post(path, protect, adminOnly, controllerFn)
+// protect: validates JWT from "Authorization: Bearer {token}" header
+// adminOnly: checks req.user.role === "admin"</pre>
+        </section>
+
+        <!-- SECTION 5: API ENDPOINTS -->
+        <section id="api" class="section">
+            <h2>5️⃣ API Endpoints</h2>
+            
+            <h3>Authentication Endpoints</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Endpoint</th>
+                    <th>Purpose</th>
+                    <th>Auth</th>
+                </tr>
+                <tr>
+                    <td>POST</td>
+                    <td>/api/auth/register</td>
+                    <td>User self-signup</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>POST</td>
+                    <td>/api/auth/login</td>
+                    <td>Email/password login</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>POST</td>
+                    <td>/api/auth/google</td>
+                    <td>Google OAuth login</td>
+                    <td>❌</td>
+                </tr>
+                <tr>
+                    <td>GET</td>
+                    <td>/api/auth/users</td>
+                    <td>List all users</td>
+                    <td>✅ Admin</td>
+                </tr>
+                <tr>
+                    <td>POST</td>
+                    <td>/api/auth/admins</td>
+                    <td>Create admin account</td>
+                    <td>✅ Admin</td>
+                </tr>
+            </table>
+
+            <h3>Task Management Endpoints</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Endpoint</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>GET</td>
+                    <td>/api/tasks</td>
+                    <td>Get user's or all tasks</td>
+                </tr>
+                <tr>
+                    <td>POST</td>
+                    <td>/api/tasks</td>
+                    <td>Create task</td>
+                </tr>
+                <tr>
+                    <td>PUT</td>
+                    <td>/api/tasks/:id</td>
+                    <td>Update task (status, priority, dates)</td>
+                </tr>
+                <tr>
+                    <td>DELETE</td>
+                    <td>/api/tasks/:id</td>
+                    <td>Delete task</td>
+                </tr>
+                <tr>
+                    <td>GET</td>
+                    <td>/api/tasks/dashboard/stats</td>
+                    <td>Dashboard statistics</td>
+                </tr>
+                <tr>
+                    <td>GET</td>
+                    <td>/api/tasks/analytics</td>
+                    <td>Admin analytics (30-day trends)</td>
+                </tr>
+            </table>
+
+            <h3>Task Dependencies &amp; Attachments</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Endpoint</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>POST</td>
+                    <td>/api/tasks/:id/prerequisites</td>
+                    <td>Add prerequisite tasks (with circular check)</td>
+                </tr>
+                <tr>
+                    <td>DELETE</td>
+                    <td>/api/tasks/:id/prerequisites/:prereqId</td>
+                    <td>Remove dependency</td>
+                </tr>
+                <tr>
+                    <td>DELETE</td>
+                    <td>/api/tasks/:id/attachments/:attId</td>
+                    <td>Delete file</td>
+                </tr>
+                <tr>
+                    <td>POST</td>
+                    <td>/api/tasks/:id/attachments/:attId/version</td>
+                    <td>Upload new file version</td>
+                </tr>
+            </table>
+
+            <h3>Comments &amp; Notifications</h3>
+            <table>
+                <tr>
+                    <th>Method</th>
+                    <th>Endpoint</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>GET</td>
+                    <td>/api/tasks/:taskId/comments</td>
+                    <td>Get comments &amp; activity log</td>
+                </tr>
+                <tr>
+                    <td>POST</td>
+                    <td>/api/tasks/:taskId/comments</td>
+                    <td>Add comment with @mentions</td>
+                </tr>
+                <tr>
+                    <td>GET</td>
+                    <td>/api/notifications</td>
+                    <td>Get notifications (with filters)</td>
+                </tr>
+                <tr>
+                    <td>PUT</td>
+                    <td>/api/notifications/mark-all-read</td>
+                    <td>Mark all notifications as read</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- SECTION 6: FEATURES -->
+        <section id="features" class="section">
+            <h2>6️⃣ Core Features</h2>
+            
+            <h3>Task Management</h3>
+            <ul class="feature-list">
+                <li>✅ Create, read, update, delete tasks</li>
+                <li>✅ Status tracking (Pending → In Progress → Done)</li>
+                <li>✅ Priority levels (Low, Medium, High, Critical)</li>
+                <li>✅ Due dates &amp; deadlines</li>
+                <li>✅ Task assignment to users</li>
+                <li>✅ Tags &amp; categorization</li>
+                <li>✅ Subtasks with completion tracking</li>
+                <li>✅ Archive/restore tasks</li>
+            </ul>
+
+            <h3>Task Dependencies <span class="success">(NEW!)</span></h3>
+            <ul class="feature-list">
+                <li>✅ Set prerequisite tasks</li>
+                <li>✅ Blocking logic: Cannot move to In Progress/Done if prerequisites incomplete</li>
+                <li>✅ Circular dependency prevention (DFS algorithm)</li>
+                <li>✅ Visual status indicators (🔴 Pending, 🟡 In Progress, 🟢 Done)</li>
+                <li>✅ Clear error messages for incomplete dependencies</li>
+                <li>✅ Admin-only prerequisite management</li>
+            </ul>
+
+            <h3>Collaboration &amp; Communication</h3>
+            <ul class="feature-list">
+                <li>✅ Comments on tasks</li>
+                <li>✅ @Mentions with notifications</li>
+                <li>✅ Threaded replies</li>
+                <li>✅ Emoji reactions (👍, ❤️, 🎉, etc.)</li>
+                <li>✅ Auto-generated activity feed</li>
+                <li>✅ Typing indicators</li>
+            </ul>
+
+            <h3>File Management</h3>
+            <ul class="feature-list">
+                <li>✅ Upload files (Cloudinary or local)</li>
+                <li>✅ Version control &amp; history</li>
+                <li>✅ File preview modal</li>
+                <li>✅ 10MB file size limit</li>
+                <li>✅ Multiple format support (jpg, png, pdf, docx, xlsx, zip, etc.)</li>
+            </ul>
+
+            <h3>Views &amp; Analytics</h3>
+            <ul class="feature-list">
+                <li>✅ Dashboard with statistics</li>
+                <li>✅ Kanban board (drag-and-drop)</li>
+                <li>✅ Calendar view (task scheduling)</li>
+                <li>✅ Admin analytics (30-day trends)</li>
+                <li>✅ Search &amp; filtering</li>
+            </ul>
+
+            <h3>Notifications</h3>
+            <ul class="feature-list">
+                <li>✅ Multi-channel (in-app + email)</li>
+                <li>✅ Task assignment notifications</li>
+                <li>✅ Task completion alerts</li>
+                <li>✅ @Mention emails</li>
+                <li>✅ Due soon reminders (24-hour)</li>
+                <li>✅ Overdue alerts</li>
+                <li>✅ Weekly digest email</li>
+                <li>✅ User preference controls</li>
+            </ul>
+
+            <h3>AI Assistant <span class="success">(NEW!)</span></h3>
+            <ul class="feature-list">
+                <li>✅ AI chatbot (Google GenAI)</li>
+                <li>✅ Task breakdown suggestions</li>
+                <li>✅ Workload analysis</li>
+                <li>✅ Stateful conversation history</li>
+            </ul>
+        </section>
+
+        <!-- SECTION 7: REAL-TIME -->
+        <section id="realtime" class="section">
+            <h2>7️⃣ Real-Time Features (Socket.io)</h2>
+            
+            <h3>Architecture</h3>
+            <ul>
+                <li><strong>Server Port</strong>: 5000 (same as API)</li>
+                <li><strong>Authentication</strong>: JWT verification on connection</li>
+                <li><strong>Rooms</strong>: Per-task (<code>task:{id}</code>), per-user (<code>user:{userId}</code>), broadcast</li>
+            </ul>
+
+            <h3>Real-Time Events</h3>
+            <table>
+                <tr>
+                    <th>Event</th>
+                    <th>When Fired</th>
+                    <th>Payload</th>
+                </tr>
+                <tr>
+                    <td><code>task:created</code></td>
+                    <td>New task created</td>
+                    <td>Full task object</td>
+                </tr>
+                <tr>
+                    <td><code>task:updated</code></td>
+                    <td>Task status/priority changed</td>
+                    <td>Updated task</td>
+                </tr>
+                <tr>
+                    <td><code>comment:created</code></td>
+                    <td>Comment posted</td>
+                    <td>Comment with author</td>
+                </tr>
+                <tr>
+                    <td><code>notification:new</code></td>
+                    <td>New notification</td>
+                    <td>Notification object</td>
+                </tr>
+                <tr>
+                    <td><code>presence:update</code></td>
+                    <td>User goes online/offline</td>
+                    <td>Online users list</td>
+                </tr>
+            </table>
+
+            <h3>Online Presence Tracking</h3>
+            <div class="box">
+                Real-time user online/offline status. Last seen timestamp on disconnect. Broadcast to all connected clients. Endpoint: <code>GET /api/auth/presence</code>
+            </div>
+        </section>
+
+        <!-- SECTION 8: EMAIL & NOTIFICATIONS -->
+        <section id="email" class="section">
+            <h2>8️⃣ Email &amp; Notifications</h2>
+            
+            <h3>Email Service (Nodemailer)</h3>
+            <ul>
+                <li><strong>Transport</strong>: Gmail SMTP</li>
+                <li><strong>From</strong>: <code>process.env.EMAIL_USER</code></li>
+                <li><strong>Auth</strong>: Gmail app password (not regular password)</li>
+                <li><strong>Format</strong>: Styled HTML with gradients &amp; task cards</li>
+            </ul>
+
+            <h3>Email Types</h3>
+            <table>
+                <tr>
+                    <th>Type</th>
+                    <th>Recipient</th>
+                    <th>Trigger</th>
+                    <th>Content</th>
+                </tr>
+                <tr>
+                    <td>Task Assigned</td>
+                    <td>User</td>
+                    <td>Admin creates task for user</td>
+                    <td>Task details, assignee, due date</td>
+                </tr>
+                <tr>
+                    <td>Task Completed</td>
+                    <td>Admin</td>
+                    <td>User marks task Done</td>
+                    <td>Task summary, completion time</td>
+                </tr>
+                <tr>
+                    <td>@Mention</td>
+                    <td>Tagged user</td>
+                    <td>Comment mentions user</td>
+                    <td>Comment text with context</td>
+                </tr>
+                <tr>
+                    <td>Due Soon ⏰</td>
+                    <td>User</td>
+                    <td>24 hours before deadline</td>
+                    <td>Task, remaining time</td>
+                </tr>
+                <tr>
+                    <td>Overdue 🚨</td>
+                    <td>User</td>
+                    <td>Past deadline</td>
+                    <td>Task, overdue duration</td>
+                </tr>
+                <tr>
+                    <td>Weekly Digest 📊</td>
+                    <td>All users</td>
+                    <td>Weekly (Sunday)</td>
+                    <td>Stats (completed, pending, overdue)</td>
+                </tr>
+            </table>
+
+            <h3>Notification Center</h3>
+            <div class="box">
+                <strong>Filters</strong>: All, Unread, Mentions, Deadlines, Assignments, Comments, System<br>
+                <strong>Features</strong>: Search, group by date/task, mark as read, delete, clear all read<br>
+                <strong>Preferences</strong>: Per-user notification type controls (email &amp; in-app toggles)
+            </div>
+        </section>
+
+        <!-- SECTION 9: FILE MANAGEMENT -->
+        <section id="files" class="section">
+            <h2>9️⃣ File Management</h2>
+            
+            <h3>Upload Flow</h3>
+            <ol>
+                <li>User selects file</li>
+                <li>Validate: size &lt; 10MB, type in whitelist</li>
+                <li>Multer processes upload</li>
+                <li>Store: Cloudinary (if configured) OR local disk</li>
+                <li>Save metadata to <code>Task.attachments</code> array</li>
+                <li>Create activity comment: "Uploaded {filename}"</li>
+                <li>Emit socket event: <code>file:uploaded</code></li>
+            </ol>
+
+            <h3>Version Tracking</h3>
+            <ol>
+                <li>User uploads new version</li>
+                <li>Current attachment → <code>versionHistory</code> array</li>
+                <li>Version number incremented</li>
+                <li>New file becomes current</li>
+                <li>Optional note stored</li>
+                <li>Full history available for rollback</li>
+            </ol>
+
+            <h3>Storage Options</h3>
+            <table>
+                <tr>
+                    <th>Storage</th>
+                    <th>Advantages</th>
+                    <th>Notes</th>
+                </tr>
+                <tr>
+                    <td><strong>Cloudinary</strong></td>
+                    <td>Cloud storage, auto-optimization, CDN</td>
+                    <td>Recommended for production</td>
+                </tr>
+                <tr>
+                    <td><strong>Local Disk</strong></td>
+                    <td>No external dependency</td>
+                    <td>Fallback if Cloudinary not configured</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- SECTION 10: FRONTEND PAGES -->
+        <section id="pages" class="section">
+            <h2>🔟 Frontend Pages</h2>
+            
+            <h3>Public Routes</h3>
+            <table>
+                <tr>
+                    <th>Page</th>
+                    <th>Path</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>Landing</td>
+                    <td>/</td>
+                    <td>Intro, features, login/register links</td>
+                </tr>
+                <tr>
+                    <td>Login</td>
+                    <td>/login</td>
+                    <td>Email/password + Google OAuth</td>
+                </tr>
+                <tr>
+                    <td>Register</td>
+                    <td>/register</td>
+                    <td>User self-signup</td>
+                </tr>
+            </table>
+
+            <h3>User Routes (role: "user")</h3>
+            <table>
+                <tr>
+                    <th>Page</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>Dashboard</td>
+                    <td>Stats, recent tasks, charts</td>
+                </tr>
+                <tr>
+                    <td>Tasks</td>
+                    <td>Task list with search/filter</td>
+                </tr>
+                <tr>
+                    <td>Create Task</td>
+                    <td>New task form (with attachments, dependencies)</td>
+                </tr>
+                <tr>
+                    <td>Task Detail</td>
+                    <td>Full task info, comments, activity, prerequisites</td>
+                </tr>
+                <tr>
+                    <td>Kanban Board</td>
+                    <td>Visual task organization by status</td>
+                </tr>
+                <tr>
+                    <td>Calendar View</td>
+                    <td>Task scheduling by due date</td>
+                </tr>
+                <tr>
+                    <td>Notifications</td>
+                    <td>Notification center with filters &amp; preferences</td>
+                </tr>
+            </table>
+
+            <h3>Admin Routes (role: "admin")</h3>
+            <table>
+                <tr>
+                    <th>Page</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>Admin Dashboard</td>
+                    <td>System overview, charts, stats</td>
+                </tr>
+                <tr>
+                    <td>Manage Tasks</td>
+                    <td>Create/edit all tasks, set prerequisites</td>
+                </tr>
+                <tr>
+                    <td>Manage Users</td>
+                    <td>List, create, delete users</td>
+                </tr>
+                <tr>
+                    <td>Create Admin</td>
+                    <td>Create new admin account (admin-only)</td>
+                </tr>
+                <tr>
+                    <td>Analytics</td>
+                    <td>Detailed system metrics, 30-day trends</td>
+                </tr>
+                <tr>
+                    <td>Kanban / Calendar</td>
+                    <td>All tasks view</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- FLOW EXAMPLE -->
+        <section class="section">
+            <h2>🔄 Complete Request Flow Example</h2>
+            
+            <h3>Scenario: Admin Creates Task with Dependencies</h3>
+            
+            <h4>Frontend</h4>
+            <ol>
+                <li>Admin fills TaskForm (title, assignee, prerequisites, due date)</li>
+                <li>Validates form fields</li>
+                <li>Converts task names → ObjectIds</li>
+                <li>POST /api/tasks with prerequisites array</li>
+            </ol>
+
+            <h4>Backend</h4>
+            <ol>
+                <li>Verify admin role ✅</li>
+                <li>Validate assignee exists, tasks exist</li>
+                <li><strong>Check circular dependency</strong> (DFS algorithm)</li>
+                <li>Save task to MongoDB</li>
+                <li>Create Comment record (activity log)</li>
+                <li>Emit socket.io event: <code>task:created</code></li>
+            </ol>
+
+            <h4>Real-Time Updates</h4>
+            <ol>
+                <li>Socket event broadcast to room: <code>task:{id}</code></li>
+                <li>All connected clients receive live update</li>
+                <li>Show toast: "Task created successfully"</li>
+            </ol>
+
+            <h4>Notifications</h4>
+            <ol>
+                <li>Create notification for assignee</li>
+                <li>Check preferences: <code>emailAssignments</code></li>
+                <li>Send email if enabled</li>
+            </ol>
+        </section>
+
+        <!-- SECURITY -->
+        <section class="section">
+            <h2>🔒 Security Features</h2>
+            
+            <table>
+                <tr>
+                    <th>Feature</th>
+                    <th>Implementation</th>
+                </tr>
+                <tr>
+                    <td>Password Hashing</td>
+                    <td>Bcryptjs with 10 salt rounds</td>
+                </tr>
+                <tr>
+                    <td>JWT Authentication</td>
+                    <td>Signed with JWT_SECRET, 1-day expiry</td>
+                </tr>
+                <tr>
+                    <td>Role Enforcement</td>
+                    <td>Backend middleware checks role on every admin request</td>
+                </tr>
+                <tr>
+                    <td>Circular Dependencies</td>
+                    <td>DFS traversal detects loops before saving</td>
+                </tr>
+                <tr>
+                    <td>Email Uniqueness</td>
+                    <td>Mongoose unique constraint on User.email</td>
+                </tr>
+                <tr>
+                    <td>File Validation</td>
+                    <td>Whitelist MIME types, 10MB size limit</td>
+                </tr>
+                <tr>
+                    <td>XSS Protection</td>
+                    <td>React sanitizes rendered content</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- DEPLOYMENT -->
+        <section class="section">
+            <h2>🚀 Deployment Checklist</h2>
+            
+            <ul>
+                <li>☐ Set environment variables (JWT_SECRET, MONGODB_URI, EMAIL_USER, EMAIL_PASSWORD, CLOUDINARY_*, GOOGLE_CLIENT_ID)</li>
+                <li>☐ Configure Cloudinary credentials</li>
+                <li>☐ Set up Gmail app password for email service</li>
+                <li>☐ Install SSL certificate (HTTPS)</li>
+                <li>☐ Build frontend: <code>npm run build</code></li>
+                <li>☐ Start backend: <code>npm start</code> (port 5000)</li>
+                <li>☐ Test: POST to /api/auth/login</li>
+                <li>☐ Monitor: Check email service, Socket.io connections</li>
+            </ul>
+        </section>
+
+        <!-- KEY TAKEAWAYS -->
+        <section class="section">
+            <h2>🎯 Key Takeaways</h2>
+            
+            <ol>
+                <li><strong>Full-Stack Architecture</strong> - React ↔ Express ↔ MongoDB with Socket.io bridge</li>
+                <li><strong>Database Design</strong> - Normalized with relationships (Task ← Prerequisites → Task)</li>
+                <li><strong>Authentication</strong> - JWT-based with role-checking middleware</li>
+                <li><strong>Real-Time Sync</strong> - Socket.io ensures instant updates across all connected users</li>
+                <li><strong>Email Notifications</strong> - Multi-channel (in-app + email) with user preference control</li>
+                <li><strong>File Versioning</strong> - Track attachment history with rollback capability</li>
+                <li><strong>Task Dependencies</strong> - Circular dependency prevention via DFS algorithm</li>
+                <li><strong>AI Integration</strong> - Google GenAI powers chatbot and task insights</li>
+                <li><strong>Scalability</strong> - Stateless API design with no shared session storage</li>
+                <li><strong>Security</strong> - JWT auth, role enforcement, bcrypt hashing, input validation</li>
+            </ol>
+        </section>
+
+        <footer>
+            <p><strong>Last Updated</strong>: August 2026</p>
+            <p><strong>Documentation Version</strong>: 2.0</p>
+            <p><strong>Status</strong>: Complete &amp; Ready for Deployment</p>
+            <p style="margin-top: 20px; font-size: 0.85em; color: #999;">
+                This document provides a comprehensive overview of the Task Management System architecture, features, and implementation details. For specific code examples or implementation details, refer to the project source code.
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
