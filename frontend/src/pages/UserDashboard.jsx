@@ -138,6 +138,22 @@ function UserDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+
+    const handleRealtimeUpdate = () => {
+      fetchDashboardData(true);
+    };
+
+    window.addEventListener("socket:task:created", handleRealtimeUpdate);
+    window.addEventListener("socket:task:updated", handleRealtimeUpdate);
+    window.addEventListener("socket:task:deleted", handleRealtimeUpdate);
+    window.addEventListener("socket:tasks:bulk_updated", handleRealtimeUpdate);
+
+    return () => {
+      window.removeEventListener("socket:task:created", handleRealtimeUpdate);
+      window.removeEventListener("socket:task:updated", handleRealtimeUpdate);
+      window.removeEventListener("socket:task:deleted", handleRealtimeUpdate);
+      window.removeEventListener("socket:tasks:bulk_updated", handleRealtimeUpdate);
+    };
   }, []);
 
   const fetchDashboardData = async (isManualRefresh = false) => {
@@ -204,9 +220,9 @@ function UserDashboard() {
       else counts.Medium++;
     });
     return [
-      { name: "High", count: counts.High, color: "#ef4444" },
-      { name: "Medium", count: counts.Medium, color: "#f59e0b" },
-      { name: "Low", count: counts.Low, color: "#10b981" },
+      { name: "High", count: counts.High, color: "#f87171" },
+      { name: "Medium", count: counts.Medium, color: "#38bdf8" },
+      { name: "Low", count: counts.Low, color: "#34d399" },
     ];
   }, [allTasks]);
 
@@ -214,9 +230,9 @@ function UserDashboard() {
   const statusPieData = useMemo(() => {
     if (!stats) return [];
     return [
-      { name: "Completed", value: stats.completed || 0, color: "#10b981" },
-      { name: "In Progress", value: stats.inProgress || 0, color: "#f59e0b" },
-      { name: "Pending", value: stats.pending || 0, color: "#0891b2" },
+      { name: "Completed", value: stats.completed || 0, color: "#34d399" },
+      { name: "In Progress", value: stats.inProgress || 0, color: "#06b6d4" },
+      { name: "Pending", value: stats.pending || 0, color: "#fbbf24" },
     ].filter((item) => item.value > 0);
   }, [stats]);
 
@@ -489,44 +505,48 @@ function UserDashboard() {
             <span className="chart-badge">Real-time</span>
           </div>
 
-          <div className="chart-body donut-chart-container">
+          <div className="chart-body donut-chart-container" style={{ width: "100%", height: 230, minHeight: 230, position: "relative" }}>
             {statusPieData.length === 0 ? (
               <div className="chart-empty-state">
                 <p>No task statistics to visualize yet</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={230}>
-                <PieChart>
-                  <Pie
-                    data={statusPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={58}
-                    outerRadius={85}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {statusPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--card-bg, #ffffff)",
-                      borderColor: "var(--gray-200, #e2e8f0)",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    formatter={(value) => <span className="chart-legend-label">{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ width: "100%", height: 230, position: "relative" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={58}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {statusPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--card-bg, #ffffff)",
+                        borderColor: "var(--gray-200, #e2e8f0)",
+                        color: "var(--gray-800, #1e293b)",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                      }}
+                      itemStyle={{ color: "#0891b2" }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      formatter={(value) => <span className="chart-legend-label">{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
         </div>
@@ -541,29 +561,33 @@ function UserDashboard() {
             <span className="chart-badge indigo">Workload</span>
           </div>
 
-          <div className="chart-body bar-chart-container">
-            <ResponsiveContainer width="100%" height={230}>
-              <BarChart data={priorityChartData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
-                <XAxis dataKey="name" stroke="var(--gray-400)" fontSize={12} tickLine={false} />
-                <YAxis allowDecimals={false} stroke="var(--gray-400)" fontSize={12} tickLine={false} />
-                <Tooltip
-                  cursor={{ fill: "rgba(99, 102, 241, 0.06)" }}
-                  contentStyle={{
-                    backgroundColor: "var(--card-bg, #ffffff)",
-                    borderColor: "var(--gray-200, #e2e8f0)",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {priorityChartData.map((entry, index) => (
-                    <Cell key={`bar-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="chart-body bar-chart-container" style={{ width: "100%", height: 230, minHeight: 230, position: "relative" }}>
+            <div style={{ width: "100%", height: 230, position: "relative" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={priorityChartData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
+                  <XAxis dataKey="name" stroke="var(--gray-400)" fontSize={12} tickLine={false} />
+                  <YAxis allowDecimals={false} stroke="var(--gray-400)" fontSize={12} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: "rgba(6, 182, 212, 0.08)" }}
+                    contentStyle={{
+                      backgroundColor: "var(--card-bg, #ffffff)",
+                      borderColor: "var(--gray-200, #e2e8f0)",
+                      color: "var(--gray-800, #1e293b)",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                    }}
+                    itemStyle={{ color: "#0891b2" }}
+                  />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                    {priorityChartData.map((entry, index) => (
+                      <Cell key={`bar-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>

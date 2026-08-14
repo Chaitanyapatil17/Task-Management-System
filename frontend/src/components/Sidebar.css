@@ -1,0 +1,352 @@
+/* ==========================================================================
+   TMS App - LineSidebar Navigation Component Stylesheet
+   ========================================================================== */
+
+.app-line-sidebar {
+  --sidebar-w: 240px;
+  --sidebar-w-collapsed: 72px;
+  --accent-color: #06b6d4;
+  --text-color: #94a3b8;
+  --marker-color: #334155;
+  --marker-length: 32px;
+  --max-shift: 12px;
+
+  position: fixed;
+  top: var(--navbar-h, 60px);
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-w);
+  background: rgba(5, 12, 22, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s ease;
+  padding: 16px 0 16px 14px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.app-line-sidebar.sidebar--collapsed {
+  width: var(--sidebar-w-collapsed) !important;
+  padding: 16px 0;
+}
+
+/* ── Top Header / Collapse Toggle ── */
+.sidebar-top {
+  padding-right: 14px;
+  margin-bottom: 14px;
+}
+
+.sidebar--collapsed .sidebar-top {
+  padding: 0 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar-toggle-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar--collapsed .sidebar-toggle-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  justify-content: center;
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.3);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.sidebar-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Interactive Line Navigation ── */
+.sidebar-line-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-right: 10px;
+  scrollbar-width: none;
+}
+
+.sidebar-line-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar-line-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-group-heading {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-left: calc(var(--marker-length) + 6px);
+  margin-bottom: 4px;
+}
+
+.sidebar-line-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Navigation Item with Line Markers ── */
+.sidebar-line-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 6px 0;
+  padding-left: var(--marker-length);
+  transition: all 0.15s ease;
+}
+
+.sidebar--collapsed .sidebar-line-item {
+  padding-left: 0;
+  justify-content: center;
+}
+
+/* Horizontal Interactive Line Marker */
+.sidebar-line-marker {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  width: var(--marker-length);
+  background-color: color-mix(in srgb, var(--accent-color) calc(var(--effect, 0) * 100%), var(--marker-color));
+  transform-origin: left center;
+  transform: translateY(-50%) scaleX(calc(0.6 + var(--effect, 0) * 0.6));
+  transition: background-color 0.1s ease;
+  border-radius: 2px;
+}
+
+.sidebar--collapsed .sidebar-line-marker {
+  display: none;
+}
+
+/* Active State Line Glow */
+.sidebar-line-item.active .sidebar-line-marker {
+  background-color: #06b6d4;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.7);
+  transform: translateY(-50%) scaleX(1.1);
+}
+
+/* Inner Content: Shift on Hover Physics */
+.sidebar-line-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent-color) calc(var(--effect, 0) * 100%), var(--text-color));
+  transform: translateX(calc(var(--effect, 0) * var(--max-shift)));
+  transition: color 0.1s ease;
+}
+
+.sidebar--collapsed .sidebar-line-content {
+  transform: none !important;
+  justify-content: center;
+}
+
+.sidebar-line-item.active .sidebar-line-content {
+  color: #38bdf8 !important;
+  font-weight: 700;
+}
+
+/* Monospace Index Number */
+.sidebar-line-idx {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: calc(0.45 + var(--effect, 0) * 0.55);
+  color: inherit;
+  margin-right: 2px;
+}
+
+.sidebar-line-item.active .sidebar-line-idx {
+  opacity: 1;
+  color: #06b6d4;
+}
+
+/* Item Icon */
+.sidebar-line-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-size: 15px;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-line-item:hover .sidebar-line-icon {
+  transform: scale(1.1);
+}
+
+.sidebar--collapsed .sidebar-line-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sidebar--collapsed .sidebar-line-item.active .sidebar-line-icon {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: #38bdf8;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);
+}
+
+/* Item Label Text */
+.sidebar-line-text {
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* ── Footer: User Card & Sign Out ── */
+.sidebar-footer {
+  padding-top: 14px;
+  padding-right: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar--collapsed .sidebar-footer {
+  padding: 12px 10px 0 10px;
+  align-items: center;
+}
+
+.sidebar-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+}
+
+.sidebar--collapsed .sidebar-user-badge {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.sidebar-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+  flex-shrink: 0;
+}
+
+.sidebar-user-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.sidebar-user-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.sidebar-user-role.admin {
+  color: #38bdf8;
+}
+
+.sidebar-user-role.user {
+  color: #34d399;
+}
+
+/* Logout Button */
+.sidebar-logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  border-radius: 10px;
+  color: #fb7185;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar--collapsed .sidebar-logout-btn {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  justify-content: center;
+}
+
+.sidebar-logout-btn:hover {
+  background: rgba(244, 63, 94, 0.16);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #fda4af;
+  transform: translateY(-1px);
+}
+
+.sidebar-logout-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

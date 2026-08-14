@@ -1,47 +1,78 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getNotifications, markAllRead, markOneRead } from "../services/taskApi";
+import { useSocket } from "../context/SocketContext";
 
-// ── Dark mode hook (shared via localStorage + data-theme on <html>) ──────────
-export function useDarkMode() {
-  const [dark, setDark] = useState(() => localStorage.getItem("tms-theme") === "dark");
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-    localStorage.setItem("tms-theme", dark ? "dark" : "light");
-  }, [dark]);
-
-  return [dark, setDark];
+// Ensure clean standard theme (remove legacy dark mode overrides)
+if (typeof window !== "undefined") {
+  localStorage.removeItem("tms-theme");
+  document.documentElement.removeAttribute("data-theme");
 }
 
-// Apply saved theme immediately on first load (before React hydrates)
-const saved = localStorage.getItem("tms-theme");
-if (saved) document.documentElement.setAttribute("data-theme", saved);
+function getNotifIcon(type) {
+  switch (type) {
+    case "task_assigned":
+      return "📋";
+    case "task_completed":
+      return "✅";
+    case "mention":
+      return "💬";
+    case "comment":
+      return "💬";
+    case "comment_reply":
+      return "↩️";
+    case "file_uploaded":
+    case "file_version_uploaded":
+      return "📎";
+    case "task_status_changed":
+      return "⚡";
+    default:
+      return "🔔";
+  }
+}
 
 function Navbar() {
   const navigate = useNavigate();
+  const { connected } = useSocket();
   const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const [dark, setDark]           = useDarkMode();
   const [notifications, setNotif] = useState([]);
-  const [unreadCount, setUnread]  = useState(0);
-  const [open, setOpen]           = useState(false);
-  const dropdownRef               = useRef(null);
+  const [unreadCount, setUnread] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const fetchNotifications = async () => {
     try {
       const res = await getNotifications();
       setNotif(res.data.data);
       setUnread(res.data.unreadCount);
-    } catch { /* not logged in yet */ }
+    } catch {
+      /* not logged in yet */
+    }
   };
 
   useEffect(() => {
     if (user?._id || user?.id) {
       fetchNotifications();
-      const iv = setInterval(fetchNotifications, 30000);
+      const iv = setInterval(fetchNotifications, 60000); // Polling backup
       return () => clearInterval(iv);
     }
+  }, []);
+
+  // Listen for Real-Time Socket Notifications
+  useEffect(() => {
+    const handleSocketNotif = (e) => {
+      const newNotif = e.detail;
+      if (newNotif) {
+        setNotif((prev) => [newNotif, ...prev.filter((n) => n._id !== newNotif._id)]);
+        setUnread((prev) => prev + 1);
+      }
+    };
+
+    window.addEventListener("socket:notification", handleSocketNotif);
+    return () => window.removeEventListener("socket:notification", handleSocketNotif);
   }, []);
 
   useEffect(() => {
@@ -50,6 +81,18 @@ function Navbar() {
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Keyboard shortcut for quick search focus (Ctrl+K or Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const handleMarkAllRead = async () => {
@@ -61,11 +104,25 @@ function Navbar() {
   const handleNotifClick = async (n) => {
     if (!n.read) {
       await markOneRead(n._id);
-      setNotif((prev) => prev.map((item) => item._id === n._id ? { ...item, read: true } : item));
+      setNotif((prev) => prev.map((item) => (item._id === n._id ? { ...item, read: true } : item)));
       setUnread((c) => Math.max(0, c - 1));
     }
     setOpen(false);
-    navigate(user.role === "admin" ? "/admin/tasks" : "/tasks");
+
+    // If notification has a specific task reference, navigate to task detail
+    const taskId = n.task?._id || n.task;
+    if (taskId) {
+      navigate(user.role === "admin" ? `/admin/tasks/${taskId}/detail` : `/tasks/${taskId}/detail`);
+    } else {
+      navigate(user.role === "admin" ? "/admin/tasks" : "/tasks");
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    const targetPath = user.role === "admin" ? "/admin/tasks" : "/tasks";
+    navigate(`${targetPath}?q=${encodeURIComponent(searchQuery.trim())}`);
   };
 
   const timeAgo = (date) => {
@@ -79,61 +136,76 @@ function Navbar() {
   };
 
   return (
-    <header className="navbar">
-      <div className="navbar-logo">TMS</div>
-      <div className="navbar-title">Task Management System</div>
+    <header className="navbar glass-navbar">
+      {/* ── Brand Logo ── */}
+      <div className="navbar-logo" onClick={() => navigate(user.role === "admin" ? "/admin" : "/dashboard")}>
+        <div className="logo-badge-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+        </div>
+        <span className="logo-text">TMS</span>
+      </div>
 
+      {/* ── Center Quick Search Bar ── */}
+      <form onSubmit={handleSearchSubmit} className="navbar-search-form">
+        <div className="navbar-search-wrap">
+          <svg className="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            ref={searchInputRef}
+            type="text"
+            className="navbar-search-input"
+            placeholder="Search tasks, assignees, keywords…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <kbd className="search-shortcut">⌘K</kbd>
+        </div>
+      </form>
+
+      {/* ── Right Controls ── */}
       <div className="navbar-right">
-
-        {/* ── Dark mode toggle ─────────────────────────────── */}
-        <button
-          className="dark-toggle"
-          onClick={() => setDark((d) => !d)}
-          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-          title={dark ? "Light mode" : "Dark mode"}
-        >
-          {dark ? (
-            /* Sun icon */
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="5"/>
-              <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-          ) : (
-            /* Moon icon */
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-          )}
-        </button>
-
-        {/* ── Bell ─────────────────────────────────────────── */}
+        {/* ── Notification Bell Dropdown ── */}
         <div className="notif-wrapper" ref={dropdownRef}>
-          <button className="bell-btn" onClick={() => setOpen((p) => !p)} aria-label="Notifications">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          <button className={`bell-btn glass-bell ${unreadCount > 0 ? "has-unread" : ""}`} onClick={() => setOpen((p) => !p)} aria-label="Notifications">
+            <svg className="bell-svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
-            {unreadCount > 0 && <span className="bell-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
+            {unreadCount > 0 && (
+              <span className="bell-badge">
+                <span className="bell-pulse-dot" />
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
 
           {open && (
-            <div className="notif-dropdown">
+            <div className="notif-dropdown glass-dropdown">
               <div className="notif-header">
-                <span className="notif-header-title">Notifications</span>
+                <div className="notif-title-row">
+                  <span className="notif-header-title">Notifications</span>
+                  {unreadCount > 0 && <span className="notif-badge-pill">{unreadCount} new</span>}
+                </div>
                 {unreadCount > 0 && (
-                  <button className="notif-mark-read" onClick={handleMarkAllRead}>Mark all read</button>
+                  <button className="notif-mark-read" onClick={handleMarkAllRead}>
+                    Mark all read
+                  </button>
                 )}
               </div>
               <div className="notif-list">
                 {notifications.length === 0 ? (
-                  <div className="notif-empty"><span>🔔</span><p>No notifications yet</p></div>
+                  <div className="notif-empty">
+                    <span className="empty-bell">🔔</span>
+                    <p>No notifications yet</p>
+                  </div>
                 ) : (
                   notifications.map((n) => (
                     <div key={n._id} className={`notif-item ${!n.read ? "notif-unread" : ""}`} onClick={() => handleNotifClick(n)}>
-                      <div className="notif-icon">{n.type === "task_assigned" ? "📋" : "✅"}</div>
+                      <div className="notif-icon">{getNotifIcon(n.type)}</div>
                       <div className="notif-body">
                         <p className="notif-msg">{n.message}</p>
                         <span className="notif-time">{timeAgo(n.createdAt)}</span>
@@ -143,21 +215,51 @@ function Navbar() {
                   ))
                 )}
               </div>
+              <div style={{ padding: "10px 14px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", textAlign: "center", background: "rgba(0,0,0,0.2)" }}>
+                <button
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#38bdf8",
+                    fontSize: "12.5px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                  onClick={() => {
+                    setOpen(false);
+                    navigate(user.role === "admin" ? "/admin/notifications" : "/notifications");
+                  }}
+                >
+                  View All Notifications & Preferences →
+                </button>
+              </div>
             </div>
           )}
         </div>
 
-        {/* ── User info ─────────────────────────────────────── */}
-        <div className="navbar-user-info">
+        {/* ── User Profile Badge ── */}
+        <div className="navbar-user-card">
+          <div className="navbar-avatar-container">
+            <div className="navbar-avatar">{user.name ? user.name.charAt(0).toUpperCase() : "U"}</div>
+            <span
+              className={`online-indicator ${connected ? "online" : "offline"}`}
+              style={{
+                backgroundColor: connected ? "#10b981" : "#64748b",
+                boxShadow: connected ? "0 0 8px #10b981" : "none",
+              }}
+              title={connected ? "Online (Connected)" : "Disconnected"}
+            />
+          </div>
           <div className="navbar-user-text">
             <span className="navbar-user-name">{user.name || "User"}</span>
-            <span className="navbar-user-role">{user.role || ""}</span>
-          </div>
-          <div className="navbar-avatar">
-            {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+            <span className={`navbar-role-tag ${user.role === "admin" ? "admin" : "user"}`}>
+              {user.role === "admin" ? "⚡ ADMIN" : "USER"}
+            </span>
           </div>
         </div>
-
       </div>
     </header>
   );

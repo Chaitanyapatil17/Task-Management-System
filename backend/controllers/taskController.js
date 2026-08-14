@@ -9,6 +9,7 @@ const {
   sendTaskAssignedEmail,
   sendTaskCompletedEmail,
 } = require("../services/emailService");
+const { emitToTask, emitToUser, emitToAll } = require("../utils/socket");
 
 // =========================
 // Helpers
@@ -75,6 +76,10 @@ const createTask = async (req, res) => {
       size:       file.size,
       url:        file.path || null,
       publicId:   file.filename || null,
+      uploadedAt: new Date(),
+      uploadedBy: req.user.id,
+      version:    1,
+      versionHistory: [],
     }));
 
     const parsedTags = Array.isArray(tags) ? tags.filter((t) => t && t.trim()) : [];
@@ -106,12 +111,15 @@ const createTask = async (req, res) => {
     const populatedTask = await task.populate("assignedTo", "name email");
 
     if (req.user.role === "admin") {
-      await Notification.create({
+      const notif = await Notification.create({
         recipient: taskUser,
+        sender: req.user.id,
         type: "task_assigned",
         message: `New task assigned to you: "${title}"`,
         task: task._id,
       });
+      const populatedNotif = await notif.populate("task", "title");
+      emitToUser(taskUser, "notification:new", populatedNotif);
 
       await Comment.create({
         task:   task._id,
@@ -133,6 +141,9 @@ const createTask = async (req, res) => {
         console.error("Failed to send task assignment email:", emailError.message);
       }
     }
+
+    // Broadcast real-time task creation
+    emitToAll("task:created", populatedTask);
 
     res.status(201).json({ success: true, message: "Task created successfully", data: populatedTask });
   } catch (error) {
@@ -257,6 +268,10 @@ const updateTask = async (req, res) => {
       size:       file.size,
       url:        file.path || null,
       publicId:   file.filename || null,
+      uploadedAt: new Date(),
+      uploadedBy: req.user.id,
+      version:    1,
+      versionHistory: [],
     }));
 
     const newStatus = req.body.status;
@@ -307,27 +322,46 @@ const updateTask = async (req, res) => {
     const completedByUser = req.user.role !== "admin";
 
     if (req.body.status && req.body.status !== previousStatus) {
-      await Comment.create({
+      const commentDoc = await Comment.create({
         task:   id,
         author: req.user.id,
         type:   "status_change",
         text:   `Status changed from "${previousStatus}" to "${req.body.status}"`,
         meta:   { from: previousStatus, to: req.body.status },
       });
+      const popComment = await commentDoc.populate("author", "name email role avatar");
+      emitToTask(id, "comment:created", popComment);
+    }
+
+    if (newAttachments.length > 0) {
+      const commentDoc = await Comment.create({
+        task:   id,
+        author: req.user.id,
+        type:   "attachment",
+        text:   `Uploaded ${newAttachments.length} attachment(s): ${newAttachments.map((a) => a.filename).join(", ")}`,
+      });
+      const popComment = await commentDoc.populate("author", "name email role avatar");
+      emitToTask(id, "comment:created", popComment);
     }
 
     if (isNowDone && completedByUser) {
       const admins = await User.find({ role: "admin" }).select("name email _id");
       const completingUser = updatedTask.assignedTo;
 
-      await Notification.insertMany(
+      const createdNotifs = await Notification.insertMany(
         admins.map((admin) => ({
           recipient: admin._id,
+          sender: req.user.id,
           type: "task_completed",
           message: `"${updatedTask.title}" was marked as Done by ${completingUser.name}`,
           task: updatedTask._id,
         }))
       );
+
+      for (const n of createdNotifs) {
+        const popNotif = await Notification.findById(n._id).populate("task", "title");
+        emitToUser(n.recipient, "notification:new", popNotif);
+      }
 
       try {
         await Promise.all(
@@ -345,6 +379,10 @@ const updateTask = async (req, res) => {
         console.error("Failed to send task completion email:", emailError.message);
       }
     }
+
+    // Broadcast real-time task update
+    emitToTask(id, "task:updated", updatedTask);
+    emitToAll("task:updated", updatedTask);
 
     res.status(200).json({ success: true, message: "Task updated successfully", data: updatedTask });
   } catch (error) {
@@ -369,6 +407,11 @@ const deleteTask = async (req, res) => {
     }
 
     await Task.findByIdAndDelete(id);
+
+    // Broadcast real-time deletion
+    emitToTask(id, "task:deleted", { taskId: id });
+    emitToAll("task:deleted", { taskId: id });
+
     res.status(200).json({ success: true, message: "Task deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -484,6 +527,8 @@ const deleteAttachment = async (req, res) => {
       return res.status(404).json({ success: false, message: "Attachment not found" });
     }
 
+    const deletedFilename = attachment.filename;
+
     if (attachment.publicId) {
       try {
         const isImage = attachment.mimetype && attachment.mimetype.startsWith("image/");
@@ -498,7 +543,167 @@ const deleteAttachment = async (req, res) => {
     task.attachments.pull(attachmentId);
     await task.save();
 
-    res.status(200).json({ success: true, message: "Attachment deleted" });
+    const populatedTask = await Task.findById(id)
+      .populate("assignedTo", "name email")
+      .populate("prerequisites", "title status priority assignedTo");
+
+    const commentDoc = await Comment.create({
+      task: id,
+      author: req.user.id,
+      type: "attachment",
+      text: `Deleted attachment "${deletedFilename}"`,
+    });
+    const popComment = await commentDoc.populate("author", "name email role avatar");
+    emitToTask(id, "comment:created", popComment);
+
+    emitToTask(id, "task:updated", populatedTask);
+    emitToAll("task:updated", populatedTask);
+
+    res.status(200).json({ success: true, message: "Attachment deleted", data: populatedTask });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// =========================
+// Upload New Attachment Version
+// POST /api/tasks/:id/attachments/:attachmentId/version
+// =========================
+const uploadAttachmentVersion = async (req, res) => {
+  try {
+    const { id, attachmentId } = req.params;
+    const { note } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "New version file is required" });
+    }
+
+    const task = await Task.findById(id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    if (req.user.role !== "admin" && task.assignedTo.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    const attachment = task.attachments.id(attachmentId);
+    if (!attachment) {
+      return res.status(404).json({ success: false, message: "Attachment not found" });
+    }
+
+    const currentVersionNumber = attachment.version || 1;
+    if (!attachment.versionHistory) {
+      attachment.versionHistory = [];
+    }
+
+    // Save previous version snapshot
+    attachment.versionHistory.push({
+      version: currentVersionNumber,
+      filename: attachment.filename,
+      storedName: attachment.storedName,
+      mimetype: attachment.mimetype,
+      size: attachment.size,
+      url: attachment.url,
+      publicId: attachment.publicId,
+      uploadedAt: attachment.uploadedAt || new Date(),
+      uploadedBy: attachment.uploadedBy || null,
+      note: note || `Version ${currentVersionNumber}`,
+    });
+
+    const newVersionNumber = currentVersionNumber + 1;
+    attachment.filename = req.file.originalname;
+    attachment.storedName = req.file.filename;
+    attachment.mimetype = req.file.mimetype;
+    attachment.size = req.file.size;
+    attachment.url = req.file.path || null;
+    attachment.publicId = req.file.filename || null;
+    attachment.version = newVersionNumber;
+    attachment.uploadedAt = new Date();
+    attachment.uploadedBy = req.user.id;
+
+    await task.save();
+
+    const populatedTask = await Task.findById(id)
+      .populate("assignedTo", "name email")
+      .populate("prerequisites", "title status priority assignedTo");
+
+    const commentDoc = await Comment.create({
+      task: id,
+      author: req.user.id,
+      type: "attachment_version",
+      text: `Uploaded new version v${newVersionNumber} for "${req.file.originalname}"${note ? ` (${note})` : ""}`,
+      meta: {
+        attachmentId,
+        version: newVersionNumber,
+        filename: req.file.originalname,
+        note: note || "",
+      },
+    });
+    const popComment = await commentDoc.populate("author", "name email role avatar");
+    emitToTask(id, "comment:created", popComment);
+
+    const notifyTarget = req.user.role === "admin" ? task.assignedTo : null;
+    if (notifyTarget && notifyTarget.toString() !== req.user.id) {
+      const notif = await Notification.create({
+        recipient: notifyTarget,
+        sender: req.user.id,
+        type: "file_version_uploaded",
+        message: `${req.user.name} uploaded new version v${newVersionNumber} for file "${req.file.originalname}" on "${task.title}"`,
+        task: task._id,
+      });
+      const popNotif = await notif.populate("task", "title");
+      emitToUser(notifyTarget, "notification:new", popNotif);
+    }
+
+    emitToTask(id, "task:updated", populatedTask);
+    emitToAll("task:updated", populatedTask);
+
+    res.status(200).json({
+      success: true,
+      message: `Version v${newVersionNumber} uploaded successfully`,
+      data: populatedTask,
+      attachment,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// =========================
+// Get Attachment Version History
+// GET /api/tasks/:id/attachments/:attachmentId/versions
+// =========================
+const getAttachmentVersions = async (req, res) => {
+  try {
+    const { id, attachmentId } = req.params;
+    const task = await Task.findById(id).populate("attachments.versionHistory.uploadedBy", "name email");
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    const attachment = task.attachments.id(attachmentId);
+    if (!attachment) {
+      return res.status(404).json({ success: false, message: "Attachment not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        current: {
+          version: attachment.version || 1,
+          filename: attachment.filename,
+          storedName: attachment.storedName,
+          mimetype: attachment.mimetype,
+          size: attachment.size,
+          url: attachment.url,
+          uploadedAt: attachment.uploadedAt,
+          uploadedBy: attachment.uploadedBy,
+        },
+        history: attachment.versionHistory || [],
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -684,6 +889,9 @@ const addSubtask = async (req, res) => {
     await task.save();
 
     const updatedTask = await Task.findById(id).populate("assignedTo", "name email");
+    emitToTask(id, "task:updated", updatedTask);
+    emitToAll("task:updated", updatedTask);
+
     res.status(200).json({ success: true, message: "Subtask added", data: updatedTask });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -721,6 +929,9 @@ const updateSubtask = async (req, res) => {
 
     await task.save();
     const updatedTask = await Task.findById(id).populate("assignedTo", "name email");
+    emitToTask(id, "task:updated", updatedTask);
+    emitToAll("task:updated", updatedTask);
+
     res.status(200).json({ success: true, message: "Subtask updated", data: updatedTask });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -744,6 +955,9 @@ const deleteSubtask = async (req, res) => {
     await task.save();
 
     const updatedTask = await Task.findById(id).populate("assignedTo", "name email");
+    emitToTask(id, "task:updated", updatedTask);
+    emitToAll("task:updated", updatedTask);
+
     res.status(200).json({ success: true, message: "Subtask deleted", data: updatedTask });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -776,6 +990,8 @@ const addTags = async (req, res) => {
     await task.save();
 
     const updatedTask = await Task.findById(id).populate("assignedTo", "name email");
+    emitToTask(id, "task:updated", updatedTask);
+
     res.status(200).json({ success: true, message: "Tags added", data: updatedTask });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -802,6 +1018,8 @@ const removeTags = async (req, res) => {
     await task.save();
 
     const updatedTask = await Task.findById(id).populate("assignedTo", "name email");
+    emitToTask(id, "task:updated", updatedTask);
+
     res.status(200).json({ success: true, message: "Tags removed", data: updatedTask });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -829,6 +1047,9 @@ const archiveTask = async (req, res) => {
     task.archivedAt = new Date();
     await task.save();
 
+    emitToTask(id, "task:updated", task);
+    emitToAll("task:updated", task);
+
     res.status(200).json({ success: true, message: "Task archived", data: task });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -851,6 +1072,9 @@ const restoreTask = async (req, res) => {
     task.isArchived = false;
     task.archivedAt = null;
     await task.save();
+
+    emitToTask(id, "task:updated", task);
+    emitToAll("task:updated", task);
 
     res.status(200).json({ success: true, message: "Task restored", data: task });
   } catch (error) {
@@ -882,22 +1106,27 @@ const bulkActions = async (req, res) => {
     switch (action) {
       case "delete":
         await Task.deleteMany({ _id: { $in: taskIds } });
+        emitToAll("tasks:bulk_updated", { taskIds, action: "delete" });
         return res.status(200).json({ success: true, message: `${tasks.length} task(s) deleted` });
 
       case "archive":
         await Task.updateMany({ _id: { $in: taskIds } }, { isArchived: true, archivedAt: new Date() });
+        emitToAll("tasks:bulk_updated", { taskIds, action: "archive" });
         return res.status(200).json({ success: true, message: `${tasks.length} task(s) archived` });
 
       case "restore":
         await Task.updateMany({ _id: { $in: taskIds } }, { isArchived: false, archivedAt: null });
+        emitToAll("tasks:bulk_updated", { taskIds, action: "restore" });
         return res.status(200).json({ success: true, message: `${tasks.length} task(s) restored` });
 
       case "markDone":
         await Task.updateMany({ _id: { $in: taskIds } }, { status: "Done" });
+        emitToAll("tasks:bulk_updated", { taskIds, action: "markDone" });
         return res.status(200).json({ success: true, message: `${tasks.length} task(s) marked as Done` });
 
       case "markPending":
         await Task.updateMany({ _id: { $in: taskIds } }, { status: "Pending" });
+        emitToAll("tasks:bulk_updated", { taskIds, action: "markPending" });
         return res.status(200).json({ success: true, message: `${tasks.length} task(s) marked as Pending` });
 
       default:
@@ -1100,6 +1329,8 @@ module.exports = {
   deleteTask,
   getAnalytics,
   deleteAttachment,
+  uploadAttachmentVersion,
+  getAttachmentVersions,
   getUserDashboardStats,
   addPrerequisites,
   removePrerequisite,

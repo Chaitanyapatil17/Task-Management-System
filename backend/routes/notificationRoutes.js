@@ -1,57 +1,36 @@
 const express = require("express");
 const { protect } = require("../middleware/authMiddleware");
-const Notification = require("../models/Notification");
+const {
+  getNotifications,
+  markAllRead,
+  markOneRead,
+  deleteNotification,
+  clearReadNotifications,
+  getPreferences,
+  updatePreferences,
+  checkRemindersManual,
+  sendWeeklyDigestManual,
+} = require("../controllers/notificationController");
 
 const router = express.Router();
 
-// GET /api/notifications — fetch notifications for logged-in user
-router.get("/", protect, async (req, res) => {
-  try {
-    const notifications = await Notification.find({
-      recipient: req.user.id,
-    })
-      .populate("task", "title")
-      .sort({ createdAt: -1 })
-      .limit(50);
+// Preferences
+router.get("/preferences", protect, getPreferences);
+router.put("/preferences", protect, updatePreferences);
 
-    const unreadCount = notifications.filter((n) => !n.read).length;
+// Manual Triggers for reminders & weekly digest
+router.post("/check-reminders", protect, checkRemindersManual);
+router.post("/send-weekly-digest", protect, sendWeeklyDigestManual);
 
-    res.status(200).json({
-      success: true,
-      data: notifications,
-      unreadCount,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// Clear all read
+router.delete("/clear-read", protect, clearReadNotifications);
 
-// PUT /api/notifications/mark-all-read — mark all as read
-router.put("/mark-all-read", protect, async (req, res) => {
-  try {
-    await Notification.updateMany(
-      { recipient: req.user.id, read: false },
-      { read: true }
-    );
+// Mark all as read
+router.put("/mark-all-read", protect, markAllRead);
 
-    res.status(200).json({ success: true, message: "All notifications marked as read" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// PUT /api/notifications/:id/read — mark single as read
-router.put("/:id/read", protect, async (req, res) => {
-  try {
-    await Notification.findOneAndUpdate(
-      { _id: req.params.id, recipient: req.user.id },
-      { read: true }
-    );
-
-    res.status(200).json({ success: true });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+// Notifications collection
+router.get("/", protect, getNotifications);
+router.put("/:id/read", protect, markOneRead);
+router.delete("/:id", protect, deleteNotification);
 
 module.exports = router;

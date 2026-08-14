@@ -590,18 +590,11 @@ const sendTaskCompletedEmail = async ({
               <p>
                 © ${new Date().getFullYear()} TMS
               </p>
-
             </div>
-
-
           </div>
-
         </div>
-
       </body>
-
     </html>
-
   `;
 
   return sendEmail(
@@ -609,6 +602,286 @@ const sendTaskCompletedEmail = async ({
     "🎉 Task Completed - TMS",
     html
   );
+};
+
+
+// ========================================
+// MENTION EMAIL
+// ========================================
+
+const sendMentionEmail = async ({
+  userName,
+  userEmail,
+  senderName,
+  taskTitle,
+  commentText,
+  taskId,
+}) => {
+  const taskUrl = `http://localhost:5173/tasks/${taskId}/detail`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        ${emailStyles}
+      </head>
+      <body>
+        <div class="email-wrapper">
+          <div class="email-container">
+            <div class="header" style="background: linear-gradient(135deg, #0284c7, #06b6d4);">
+              <div class="logo">TMS</div>
+              <h1>You Were Mentioned</h1>
+              <p>Task Collaboration</p>
+            </div>
+            <div class="content">
+              <div class="greeting">Hello ${userName} 👋</div>
+              <div class="message">
+                <strong>${senderName}</strong> mentioned you in a comment on task:
+              </div>
+              <div class="task-card">
+                <div class="task-card-header">
+                  <span>${taskTitle}</span>
+                </div>
+                <div class="task-card-body">
+                  <div class="task-description" style="font-style: italic; color: #1e293b; font-size: 15px;">
+                    “${commentText}”
+                  </div>
+                </div>
+              </div>
+              <div class="button-container">
+                <a href="${taskUrl}" class="button" style="background-color: #0284c7;">
+                  View & Reply to Comment
+                </a>
+              </div>
+            </div>
+            <div class="footer">
+              <p>This email was sent by <strong>TMS</strong></p>
+              <p>© ${new Date().getFullYear()} TMS</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return sendEmail(userEmail, `💬 ${senderName} mentioned you on "${taskTitle}" - TMS`, html);
+};
+
+
+// ========================================
+// DUE SOON REMINDER EMAIL
+// ========================================
+
+const sendDueSoonEmail = async ({
+  userName,
+  userEmail,
+  taskTitle,
+  dueDate,
+  taskId,
+}) => {
+  const formattedDate = new Date(dueDate).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const taskUrl = `http://localhost:5173/tasks/${taskId}/detail`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        ${emailStyles}
+      </head>
+      <body>
+        <div class="email-wrapper">
+          <div class="email-container">
+            <div class="header" style="background: linear-gradient(135deg, #d97706, #f59e0b);">
+              <div class="logo">TMS</div>
+              <h1>Task Due Soon ⏰</h1>
+              <p>Deadline Reminder</p>
+            </div>
+            <div class="content">
+              <div class="greeting">Hello ${userName} 👋</div>
+              <div class="message">
+                This is a friendly reminder that one of your assigned tasks has a deadline coming up within the next 24 hours.
+              </div>
+              <div class="task-card" style="border-left: 4px solid #f59e0b;">
+                <div class="task-card-header">
+                  <span>Upcoming Deadline: ${formattedDate}</span>
+                </div>
+                <div class="task-card-body">
+                  <div class="task-title">${taskTitle}</div>
+                  <span class="status" style="background-color: #fef3c7; color: #b45309;">
+                    ⏳ Due Soon
+                  </span>
+                </div>
+              </div>
+              <div class="button-container">
+                <a href="${taskUrl}" class="button" style="background-color: #d97706;">
+                  View Task & Update Status
+                </a>
+              </div>
+            </div>
+            <div class="footer">
+              <p>This email was sent by <strong>TMS</strong></p>
+              <p>© ${new Date().getFullYear()} TMS</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return sendEmail(userEmail, `⏰ Reminder: "${taskTitle}" is due soon - TMS`, html);
+};
+
+
+// ========================================
+// OVERDUE ALERT EMAIL
+// ========================================
+
+const sendOverdueEmail = async ({
+  userName,
+  userEmail,
+  taskTitle,
+  dueDate,
+  taskId,
+}) => {
+  const formattedDate = new Date(dueDate).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const taskUrl = `http://localhost:5173/tasks/${taskId}/detail`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        ${emailStyles}
+      </head>
+      <body>
+        <div class="email-wrapper">
+          <div class="email-container">
+            <div class="header" style="background: linear-gradient(135deg, #dc2626, #ef4444);">
+              <div class="logo">TMS</div>
+              <h1>Task Overdue Alert 🚨</h1>
+              <p>Urgent Action Required</p>
+            </div>
+            <div class="content">
+              <div class="greeting">Hello ${userName} 👋</div>
+              <div class="message">
+                The deadline for your assigned task has passed. Please complete the task or update its timeline as soon as possible.
+              </div>
+              <div class="task-card" style="border-left: 4px solid #dc2626;">
+                <div class="task-card-header">
+                  <span>Was Due On: ${formattedDate}</span>
+                </div>
+                <div class="task-card-body">
+                  <div class="task-title">${taskTitle}</div>
+                  <span class="status" style="background-color: #fee2e2; color: #b91c1c;">
+                    ⚠️ Past Due
+                  </span>
+                </div>
+              </div>
+              <div class="button-container">
+                <a href="${taskUrl}" class="button" style="background-color: #dc2626;">
+                  View & Complete Task
+                </a>
+              </div>
+            </div>
+            <div class="footer">
+              <p>This email was sent by <strong>TMS</strong></p>
+              <p>© ${new Date().getFullYear()} TMS</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return sendEmail(userEmail, `🚨 Overdue Alert: "${taskTitle}" - TMS`, html);
+};
+
+
+// ========================================
+// WEEKLY PRODUCTIVITY DIGEST EMAIL
+// ========================================
+
+const sendWeeklyDigestEmail = async ({
+  userName,
+  userEmail,
+  completedCount,
+  pendingCount,
+  inProgressCount,
+  overdueCount,
+  weekRange,
+}) => {
+  const total = completedCount + pendingCount + inProgressCount;
+  const completionRate = total > 0 ? Math.round((completedCount / total) * 100) : 100;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        ${emailStyles}
+      </head>
+      <body>
+        <div class="email-wrapper">
+          <div class="email-container">
+            <div class="header" style="background: linear-gradient(135deg, #4f46e5, #7c3aed);">
+              <div class="logo">TMS</div>
+              <h1>Weekly Productivity Digest 📊</h1>
+              <p>${weekRange || "This Week's Summary"}</p>
+            </div>
+            <div class="content">
+              <div class="greeting">Hello ${userName} 👋</div>
+              <div class="message">
+                Here is your weekly summary of tasks and productivity performance across the Task Management System:
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0;">
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 10px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #15803d;">${completedCount}</div>
+                  <div style="font-size: 12px; color: #166534; font-weight: 600;">Completed Tasks</div>
+                </div>
+                <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 10px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #1d4ed8;">${inProgressCount}</div>
+                  <div style="font-size: 12px; color: #1e40af; font-weight: 600;">In Progress</div>
+                </div>
+                <div style="background: #fefce8; border: 1px solid #fef08a; padding: 15px; border-radius: 10px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #a16207;">${pendingCount}</div>
+                  <div style="font-size: 12px; color: #854d0e; font-weight: 600;">Pending Tasks</div>
+                </div>
+                <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 10px; text-align: center;">
+                  <div style="font-size: 24px; font-weight: bold; color: #b91c1c;">${overdueCount}</div>
+                  <div style="font-size: 12px; color: #991b1b; font-weight: 600;">Overdue Tasks</div>
+                </div>
+              </div>
+              <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 10px; text-align: center;">
+                <span style="font-size: 14px; font-weight: 600; color: #334155;">Weekly Completion Rate: </span>
+                <span style="font-size: 18px; font-weight: 800; color: #4f46e5;">${completionRate}%</span>
+              </div>
+              <div class="button-container">
+                <a href="http://localhost:5173/dashboard" class="button" style="background-color: #4f46e5;">
+                  Go to My Dashboard
+                </a>
+              </div>
+            </div>
+            <div class="footer">
+              <p>This email was sent by <strong>TMS</strong></p>
+              <p>© ${new Date().getFullYear()} TMS</p>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return sendEmail(userEmail, `📊 Your Weekly Productivity Digest - TMS`, html);
 };
 
 
@@ -627,4 +900,8 @@ module.exports = {
   sendEmail,
   sendTaskAssignedEmail,
   sendTaskCompletedEmail,
+  sendMentionEmail,
+  sendDueSoonEmail,
+  sendOverdueEmail,
+  sendWeeklyDigestEmail,
 };

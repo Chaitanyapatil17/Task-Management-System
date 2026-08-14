@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import API from "../services/taskApi";
 
 const COLUMNS = [
-  { key: "Pending",     label: "Pending",     color: "#0891b2", bg: "#e0f2fe" },
-  { key: "In Progress", label: "In Progress", color: "#f59e0b", bg: "#fef3c7" },
-  { key: "Done",        label: "Done",        color: "#10b981", bg: "#d1fae5" },
+  { key: "Pending",     label: "Pending",     color: "#38bdf8", bg: "rgba(6, 182, 212, 0.15)" },
+  { key: "In Progress", label: "In Progress", color: "#fbbf24", bg: "rgba(245, 158, 11, 0.15)" },
+  { key: "Done",        label: "Done",        color: "#34d399", bg: "rgba(16, 185, 129, 0.15)" },
 ];
 
 export default function KanbanBoard() {
@@ -35,6 +35,22 @@ export default function KanbanBoard() {
 
   useEffect(() => {
     fetchKanban();
+
+    const handleRealtimeUpdate = () => {
+      fetchKanban();
+    };
+
+    window.addEventListener("socket:task:created", handleRealtimeUpdate);
+    window.addEventListener("socket:task:updated", handleRealtimeUpdate);
+    window.addEventListener("socket:task:deleted", handleRealtimeUpdate);
+    window.addEventListener("socket:tasks:bulk_updated", handleRealtimeUpdate);
+
+    return () => {
+      window.removeEventListener("socket:task:created", handleRealtimeUpdate);
+      window.removeEventListener("socket:task:updated", handleRealtimeUpdate);
+      window.removeEventListener("socket:task:deleted", handleRealtimeUpdate);
+      window.removeEventListener("socket:tasks:bulk_updated", handleRealtimeUpdate);
+    };
   }, []);
 
   const handlePageSizeChange = (e) => {
@@ -156,8 +172,9 @@ export default function KanbanBoard() {
             <div
               key={col.key}
               style={{
-                background: "var(--card-bg, #ffffff)",
-                border: "1px solid var(--gray-200)",
+                background: "rgba(10, 20, 35, 0.78)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid var(--border)",
                 borderRadius: "var(--radius-lg)",
                 padding: 16,
                 minHeight: 450,
@@ -185,7 +202,7 @@ export default function KanbanBoard() {
                     fontSize: 12,
                     fontWeight: 700,
                     color: col.color,
-                    background: "#fff",
+                    background: "rgba(255, 255, 255, 0.1)",
                     padding: "2px 10px",
                     borderRadius: "20px",
                     border: `1px solid ${col.color}44`,
@@ -208,8 +225,8 @@ export default function KanbanBoard() {
                       onDragEnd={handleDragEnd}
                       onClick={() => navigate(`/admin/tasks/${task._id}/detail`)}
                       style={{
-                        background: "var(--card-bg, #ffffff)",
-                        border: "1px solid var(--gray-200)",
+                        background: "rgba(14, 26, 46, 0.9)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
                         borderRadius: "var(--radius)",
                         padding: 14,
                         cursor: "grab",
@@ -217,12 +234,12 @@ export default function KanbanBoard() {
                         boxShadow: "var(--shadow-sm)",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.boxShadow = "var(--shadow)";
+                        e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 0, 0, 0.5), 0 0 14px rgba(6, 182, 212, 0.2)";
                         e.currentTarget.style.borderColor = "var(--primary)";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.boxShadow = "var(--shadow-sm)";
-                        e.currentTarget.style.borderColor = "var(--gray-200)";
+                        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>

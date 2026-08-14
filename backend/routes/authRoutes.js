@@ -8,6 +8,8 @@ const {
   createAdminByAdmin,
   getUsers,
   deleteUser,
+  getCollaborators,
+  getPresenceStatus,
 } = require("../controllers/authController");
 
 const {
@@ -22,6 +24,10 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 router.post("/google", googleLogin);
+
+// Protected Collaborators & Presence (All authenticated users)
+router.get("/collaborators", protect, getCollaborators);
+router.get("/presence", protect, getPresenceStatus);
 
 
 // Admin

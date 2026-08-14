@@ -1,14 +1,17 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useGoogleLogin } from "@react-oauth/google";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
+import GradientWaves from "../components/GradientWaves";
 import API from "../services/taskApi";
+import "./Auth.css";
 
 function Login() {
   const navigate = useNavigate();
-  const [formData, setFormData]     = useState({ email: "", password: "" });
-  const [loading, setLoading]       = useState(false);
-  const [googleLoading, setGLoading] = useState(false);
-  const [error, setError]           = useState("");
+  const location = useLocation();
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const successMsg = location.state?.message || "";
 
   const handleChange = (e) => {
     setError("");
@@ -34,43 +37,17 @@ function Login() {
     }
   };
 
-  // ── Google login (ID token flow via @react-oauth/google) ──────
-  // useGoogleLogin with flow:"implicit" gives us an access_token.
-  // We use the credential callback approach instead (oneTap / popup).
-  const handleGoogleSuccess = async (tokenResponse) => {
-    // tokenResponse.access_token → exchange for user info, OR
-    // use the credential (ID token) flow. Here we use access_token
-    // to fetch user info from Google, then send the ID token.
-    setError("");
-    setGLoading(true);
+  // ── Google login success ──────────────────────────────────────
+  const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // Fetch the ID token directly by posting to our backend using access_token
-      // We actually need the credential (ID token). Use the credential flow.
       const res = await API.post("/auth/google", {
-        credential: tokenResponse.credential,
+        credential: credentialResponse.credential,
       });
       saveAndRedirect(res.data);
     } catch (err) {
       setError(err.response?.data?.message || "Google sign-in failed. Please try again.");
-    } finally {
-      setGLoading(false);
     }
   };
-
-  // Use GoogleLogin component approach (renders Google's official button)
-  // We render a custom button and trigger the flow ourselves.
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      // This gives us an access_token. We need to exchange it for user info
-      // and send to our backend. But our backend expects an ID token (credential).
-      // Best approach: use the credential (CredentialResponse) flow via GoogleLogin component.
-      setGLoading(false);
-    },
-    onError: () => {
-      setError("Google sign-in was cancelled or failed.");
-      setGLoading(false);
-    },
-  });
 
   const saveAndRedirect = ({ token, user }) => {
     localStorage.setItem("token", token);
@@ -79,140 +56,182 @@ function Login() {
   };
 
   return (
-    <div className="login-page">
-
-      {/* ── Left panel ── */}
-      <div className="login-left">
-        <div className="login-brand">
-          <span className="login-brand-name">TMS</span>
-        </div>
-        <h2 className="login-tagline">Task management<br />that stays out of your way.</h2>
-        <p className="login-sub">Assign, track and complete work — without the noise.</p>
-        <div className="login-features">
-          {[
-            "Role-based access for admins and users",
-            "Real-time in-app notifications",
-            "File attachments on every task",
-            "Priority levels and due dates",
-          ].map((f) => (
-            <div className="login-feature" key={f}>
-              <span className="login-feature-dot" />
-              {f}
-            </div>
-          ))}
-        </div>
+    <div className="auth-root">
+      {/* ── Background WebGL GradientWaves Canvas ── */}
+      <div className="auth-bg-layer">
+        <GradientWaves
+          horizonColor="#0284c7"
+          waveColor="#7c3aed"
+          crestColor="#06b6d4"
+          speed={0.4}
+          amplitude={3.0}
+          waveScale={0.7}
+          waveRatio={0.9}
+          swell={40}
+          turbulence={22}
+          tilt={1.11}
+          zoom={1}
+          height={5.5}
+          fogDepth={24}
+          detail="medium"
+          brightness={1.25}
+          opacity={1}
+          mouseInteraction={true}
+          parallaxStrength={0.5}
+          grain={true}
+          grainIntensity={0.06}
+        />
       </div>
 
-      {/* ── Right panel ── */}
-      <div className="login-right">
-        <div className="login-card">
-          <div className="login-card-header">
-            <div className="login-logo">TMS</div>
-            <h1>Sign in</h1>
-            <p>Enter your credentials to continue</p>
+      {/* ── Foreground Layer ── */}
+      <div className="auth-content-layer">
+        {/* Top bar */}
+        <div className="auth-top-nav">
+          <Link to="/" className="auth-back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back to Home
+          </Link>
+          <div className="auth-brand-badge">
+            <div className="auth-brand-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+            </div>
+            <span>TMS Pro</span>
+          </div>
+        </div>
+
+        {/* Center Card */}
+        <div className="auth-card-container">
+          <div className="auth-card-header">
+            <div className="auth-card-icon-pill">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+            </div>
+            <h1>Welcome back</h1>
+            <p>Sign in to access your workspace & tasks</p>
           </div>
 
-          {/* Error banner */}
-          {error && <div className="login-error">{error}</div>}
+          {/* Success message from registration */}
+          {successMsg && !error && (
+            <div className="auth-alert-success">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              <span>{successMsg}</span>
+            </div>
+          )}
 
-          {/* Google button — uses GoogleLogin component for proper ID token flow */}
-          <GoogleSignInButton
-            onSuccess={saveAndRedirect}
-            onError={(msg) => setError(msg)}
-          />
+          {/* Error alert */}
+          {error && (
+            <div className="auth-alert-error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Google Sign-in */}
+          <div className="auth-google-wrapper">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Google sign-in was cancelled or failed.")}
+              useOneTap={false}
+              theme="outline"
+              size="large"
+              width="360"
+              text="signin_with"
+              shape="pill"
+            />
+          </div>
 
           {/* Divider */}
-          <div className="login-divider">
-            <span className="login-divider-line" />
-            <span className="login-divider-text">or continue with email</span>
-            <span className="login-divider-line" />
+          <div className="auth-divider">
+            <span className="auth-divider-line" />
+            <span className="auth-divider-text">or with email</span>
+            <span className="auth-divider-line" />
           </div>
 
-          {/* Email / password form */}
-          <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <label htmlFor="email">Email address</label>
-              <div className="input-with-icon">
-                <svg className="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="auth-form-group">
+              <label htmlFor="email">Email Address</label>
+              <div className="auth-input-container">
+                <span className="auth-input-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                </span>
                 <input
-                  id="email" type="email" name="email"
-                  placeholder="you@example.com"
-                  value={formData.email} onChange={handleChange}
+                  id="email"
+                  type="email"
+                  name="email"
+                  placeholder="name@company.com"
+                  value={formData.email}
+                  onChange={handleChange}
                   autoComplete="email"
+                  className="auth-input"
                 />
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="auth-form-group">
               <label htmlFor="password">Password</label>
-              <div className="input-with-icon">
-                <svg className="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+              <div className="auth-input-container">
+                <span className="auth-input-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                </span>
                 <input
-                  id="password" type="password" name="password"
+                  id="password"
+                  type="password"
+                  name="password"
                   placeholder="Enter your password"
-                  value={formData.password} onChange={handleChange}
+                  value={formData.password}
+                  onChange={handleChange}
                   autoComplete="current-password"
+                  className="auth-input"
                 />
               </div>
             </div>
 
-            <button type="submit" className="primary-button login-button" disabled={loading}>
-              {loading
-                ? <span className="btn-loading"><span className="spinner" /> Signing in…</span>
-                : "Sign In"
-              }
+            <button type="submit" className="auth-submit-btn" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="auth-spinner" /> Signing in…
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
           </form>
 
-          {/* Create Account link */}
-          <div className="register-signin-link">
+          {/* Switch to Register */}
+          <div className="auth-footer-nav">
             <p>
-              Don't have an account?{" "}
-              <a href="/register" className="link">
+              Don't have an account?
+              <Link to="/register" className="auth-link">
                 Create one
-              </a>
+              </Link>
             </p>
           </div>
         </div>
       </div>
-
-    </div>
-  );
-}
-
-/* ── Separate component so it can import GoogleLogin cleanly ── */
-import { GoogleLogin } from "@react-oauth/google";
-
-function GoogleSignInButton({ onSuccess, onError }) {
-  const handleSuccess = async (credentialResponse) => {
-    try {
-      const res = await API.post("/auth/google", {
-        credential: credentialResponse.credential,
-      });
-      onSuccess(res.data);
-    } catch (err) {
-      onError(err.response?.data?.message || "Google sign-in failed. Please try again.");
-    }
-  };
-
-  return (
-    <div className="google-btn-wrap">
-      <GoogleLogin
-        onSuccess={handleSuccess}
-        onError={() => onError("Google sign-in was cancelled or failed.")}
-        useOneTap={false}
-        theme="outline"
-        size="large"
-        width="100%"
-        text="signin_with"
-        shape="rectangular"
-      />
     </div>
   );
 }

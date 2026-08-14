@@ -10,9 +10,9 @@ const fmtDate = (d) => {
 };
 
 const STATUS_COLORS = {
-  Pending:      "#f59e0b",
-  "In Progress":"#3b82f6",
-  Done:         "#21F1A8",
+  Pending:      "#fbbf24",
+  "In Progress":"#38bdf8",
+  Done:         "#34d399",
 };
 
 /* ─── SVG Donut Chart ─────────────────────────────────────── */
@@ -41,15 +41,15 @@ function DonutChart({ data, size = 200 }) {
             key={s.name}
             cx={cx} cy={cy} r={r}
             fill="none"
-            stroke={STATUS_COLORS[s.name] || "#e5e7eb"}
+            stroke={STATUS_COLORS[s.name] || "rgba(255, 255, 255, 0.15)"}
             strokeWidth={stroke}
             strokeDasharray={`${s.dash} ${s.gap}`}
             strokeDashoffset={-s.offset + circumference / 4}
             style={{ transition: "stroke-dasharray .5s ease" }}
           />
         ))}
-        <text x={cx} y={cy - 10} textAnchor="middle" fontSize="26" fontWeight="800" fill="#171717">{total}</text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fontSize="12" fill="#6b7280">Total</text>
+        <text x={cx} y={cy - 10} textAnchor="middle" fontSize="26" fontWeight="800" fill="#ffffff">{total}</text>
+        <text x={cx} y={cy + 14} textAnchor="middle" fontSize="12" fill="rgba(255, 255, 255, 0.6)">Total</text>
       </svg>
 
       <div className="donut-legend">

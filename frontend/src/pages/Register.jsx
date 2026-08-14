@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import GradientWaves from "../components/GradientWaves";
 import API from "../services/taskApi";
+import "./Auth.css";
 
 function Register() {
   const navigate = useNavigate();
@@ -16,16 +18,16 @@ function Register() {
 
   const handleChange = (e) => {
     setError("");
-    setFieldErrors({});
+    setFieldErrors({ ...fieldErrors, [e.target.name]: "" });
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Validation logic
+  // Client-side validation
   const validateForm = () => {
     const errors = {};
 
     if (!formData.name.trim()) {
-      errors.name = "Name is required";
+      errors.name = "Full name is required";
     } else if (formData.name.trim().length < 2) {
       errors.name = "Name must be at least 2 characters";
     }
@@ -33,7 +35,7 @@ function Register() {
     if (!formData.email.trim()) {
       errors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "Please enter a valid email";
+      errors.email = "Please enter a valid email address";
     }
 
     if (!formData.password) {
@@ -56,7 +58,6 @@ function Register() {
     setError("");
     setFieldErrors({});
 
-    // Client-side validation
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -72,9 +73,8 @@ function Register() {
       });
 
       if (res.data.success) {
-        // Redirect to login after successful registration
         navigate("/login", {
-          state: { message: "Registration successful! Please sign in with your credentials." },
+          state: { message: "Account created successfully! Please sign in below." },
         });
       }
     } catch (err) {
@@ -85,51 +85,95 @@ function Register() {
   };
 
   return (
-    <div className="login-page">
-      {/* ── Left panel ── */}
-      <div className="login-left">
-        <div className="login-brand">
-          <span className="login-brand-name">TMS</span>
-        </div>
-        <h2 className="login-tagline">Join our task<br />management system.</h2>
-        <p className="login-sub">Create an account to start managing your tasks efficiently.</p>
-        <div className="login-features">
-          {[
-            "Access assigned tasks in real-time",
-            "Receive in-app notifications",
-            "Attach files to track progress",
-            "Set priorities and due dates",
-          ].map((f) => (
-            <div className="login-feature" key={f}>
-              <span className="login-feature-dot" />
-              {f}
-            </div>
-          ))}
-        </div>
+    <div className="auth-root">
+      {/* ── Background WebGL GradientWaves Canvas ── */}
+      <div className="auth-bg-layer">
+        <GradientWaves
+          horizonColor="#0284c7"
+          waveColor="#7c3aed"
+          crestColor="#06b6d4"
+          speed={0.4}
+          amplitude={3.0}
+          waveScale={0.7}
+          waveRatio={0.9}
+          swell={40}
+          turbulence={22}
+          tilt={1.11}
+          zoom={1}
+          height={5.5}
+          fogDepth={24}
+          detail="medium"
+          brightness={1.25}
+          opacity={1}
+          mouseInteraction={true}
+          parallaxStrength={0.5}
+          grain={true}
+          grainIntensity={0.06}
+        />
       </div>
 
-      {/* ── Right panel ── */}
-      <div className="login-right">
-        <div className="login-card">
-          <div className="login-card-header">
-            <div className="login-logo">TMS</div>
+      {/* ── Foreground Layer ── */}
+      <div className="auth-content-layer">
+        {/* Top bar */}
+        <div className="auth-top-nav">
+          <Link to="/" className="auth-back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            Back to Home
+          </Link>
+          <div className="auth-brand-badge">
+            <div className="auth-brand-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+            </div>
+            <span>TMS Pro</span>
+          </div>
+        </div>
+
+        {/* Center Card */}
+        <div className="auth-card-container auth-card-register">
+          <div className="auth-card-header">
+            <div className="auth-card-icon-pill">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <line x1="20" y1="8" x2="20" y2="14" />
+                <line x1="23" y1="11" x2="17" y2="11" />
+              </svg>
+            </div>
             <h1>Create Account</h1>
-            <p>Sign up to get started</p>
+            <p>Get started with faster task management</p>
           </div>
 
-          {/* Error banner */}
-          {error && <div className="login-error">{error}</div>}
+          {/* Error alert */}
+          {error && (
+            <div className="auth-alert-error">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
 
-          {/* Registration form */}
-          <form onSubmit={handleSubmit} className="login-form">
-            {/* Name field */}
-            <div className="form-group">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="auth-form">
+            {/* Full Name */}
+            <div className="auth-form-group">
               <label htmlFor="name">Full Name</label>
-              <div className="input-with-icon">
-                <svg className="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
+              <div className="auth-input-container">
+                <span className="auth-input-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                </span>
                 <input
                   id="name"
                   type="text"
@@ -138,94 +182,103 @@ function Register() {
                   value={formData.name}
                   onChange={handleChange}
                   autoComplete="name"
-                  className={fieldErrors.name ? "input-error" : ""}
+                  className={`auth-input ${fieldErrors.name ? "has-error" : ""}`}
                 />
               </div>
-              {fieldErrors.name && <span className="form-error">{fieldErrors.name}</span>}
+              {fieldErrors.name && <span className="auth-field-error">{fieldErrors.name}</span>}
             </div>
 
-            {/* Email field */}
-            <div className="form-group">
+            {/* Email */}
+            <div className="auth-form-group">
               <label htmlFor="email">Email Address</label>
-              <div className="input-with-icon">
-                <svg className="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
+              <div className="auth-input-container">
+                <span className="auth-input-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                </span>
                 <input
                   id="email"
                   type="email"
                   name="email"
-                  placeholder="you@example.com"
+                  placeholder="you@company.com"
                   value={formData.email}
                   onChange={handleChange}
                   autoComplete="email"
-                  className={fieldErrors.email ? "input-error" : ""}
+                  className={`auth-input ${fieldErrors.email ? "has-error" : ""}`}
                 />
               </div>
-              {fieldErrors.email && <span className="form-error">{fieldErrors.email}</span>}
+              {fieldErrors.email && <span className="auth-field-error">{fieldErrors.email}</span>}
             </div>
 
-            {/* Password field */}
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <div className="input-with-icon">
-                <svg className="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <input
-                  id="password"
-                  type="password"
-                  name="password"
-                  placeholder="At least 6 characters"
-                  value={formData.password}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  className={fieldErrors.password ? "input-error" : ""}
-                />
+            {/* Password and Confirm Password in 2 Columns */}
+            <div className="auth-form-row">
+              <div className="auth-form-group">
+                <label htmlFor="password">Password</label>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </span>
+                  <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    placeholder="Min. 6 chars"
+                    value={formData.password}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    className={`auth-input ${fieldErrors.password ? "has-error" : ""}`}
+                  />
+                </div>
+                {fieldErrors.password && <span className="auth-field-error">{fieldErrors.password}</span>}
               </div>
-              {fieldErrors.password && <span className="form-error">{fieldErrors.password}</span>}
-            </div>
 
-            {/* Confirm Password field */}
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
-              <div className="input-with-icon">
-                <svg className="input-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  className={fieldErrors.confirmPassword ? "input-error" : ""}
-                />
+              <div className="auth-form-group">
+                <label htmlFor="confirmPassword">Confirm</label>
+                <div className="auth-input-container">
+                  <span className="auth-input-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </span>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    name="confirmPassword"
+                    placeholder="Repeat password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    className={`auth-input ${fieldErrors.confirmPassword ? "has-error" : ""}`}
+                  />
+                </div>
+                {fieldErrors.confirmPassword && (
+                  <span className="auth-field-error">{fieldErrors.confirmPassword}</span>
+                )}
               </div>
-              {fieldErrors.confirmPassword && <span className="form-error">{fieldErrors.confirmPassword}</span>}
             </div>
 
-            <button type="submit" className="primary-button login-button" disabled={loading}>
+            <button type="submit" className="auth-submit-btn" disabled={loading}>
               {loading ? (
-                <span className="btn-loading">
-                  <span className="spinner" /> Creating account…
-                </span>
+                <>
+                  <span className="auth-spinner" /> Creating account…
+                </>
               ) : (
                 "Create Account"
               )}
             </button>
           </form>
 
-          {/* Sign In link */}
-          <div className="register-signin-link">
+          {/* Switch to Login */}
+          <div className="auth-footer-nav">
             <p>
-              Already have an account?{" "}
-              <Link to="/login" className="link">
+              Already have an account?
+              <Link to="/login" className="auth-link">
                 Sign in
               </Link>
             </p>

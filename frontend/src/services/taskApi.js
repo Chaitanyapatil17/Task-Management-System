@@ -15,9 +15,48 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Notifications Endpoints
 export const getNotifications = () => API.get("/notifications");
+export const getNotificationList = (params = {}) => {
+  const q = new URLSearchParams();
+  if (params.filter) q.set("filter", params.filter);
+  if (params.groupBy) q.set("groupBy", params.groupBy);
+  if (params.search) q.set("search", params.search);
+  if (params.page) q.set("page", params.page);
+  if (params.limit) q.set("limit", params.limit);
+  return API.get(`/notifications?${q.toString()}`);
+};
 export const markAllRead = () => API.put("/notifications/mark-all-read");
 export const markOneRead = (id) => API.put(`/notifications/${id}/read`);
+export const deleteNotification = (id) => API.delete(`/notifications/${id}`);
+export const clearReadNotifications = () => API.delete("/notifications/clear-read");
+
+export const getNotificationPreferences = () => API.get("/notifications/preferences");
+export const updateNotificationPreferences = (data) => API.put("/notifications/preferences", data);
+export const triggerCheckReminders = () => API.post("/notifications/check-reminders");
+export const triggerSendWeeklyDigest = () => API.post("/notifications/send-weekly-digest");
+
+// Collaboration & Presence Endpoints
+export const getCollaborators = () => API.get("/auth/collaborators");
+export const getPresenceStatus = () => API.get("/auth/presence");
+
+// Comments & Reactions
+export const getTaskComments = (taskId) => API.get(`/tasks/${taskId}/comments`);
+export const postTaskComment = (taskId, data) => API.post(`/tasks/${taskId}/comments`, data);
+export const reactToComment = (taskId, commentId, emoji) => API.post(`/tasks/${taskId}/comments/${commentId}/reactions`, { emoji });
+export const editTaskComment = (taskId, commentId, text) => API.put(`/tasks/${taskId}/comments/${commentId}`, { text });
+export const deleteTaskComment = (taskId, commentId) => API.delete(`/tasks/${taskId}/comments/${commentId}`);
+
+// Attachment Versioning
+export const uploadAttachmentVersion = (taskId, attachmentId, file, note = "") => {
+  const fd = new FormData();
+  fd.append("file", file);
+  if (note) fd.append("note", note);
+  return API.post(`/tasks/${taskId}/attachments/${attachmentId}/version`, fd, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+};
+export const getAttachmentVersions = (taskId, attachmentId) => API.get(`/tasks/${taskId}/attachments/${attachmentId}/versions`);
 
 export const createTaskWithFiles = (data, files = []) => {
   const fd = new FormData();
@@ -71,9 +110,31 @@ export const createFromTemplate = (data) => API.post("/tasks/from-template", dat
 export const getKanbanTasks = () => API.get("/tasks/kanban");
 export const getCalendarTasks = (start, end, assignedTo) => API.get(`/tasks/calendar?start=${start}&end=${end}${assignedTo ? `&assignedTo=${assignedTo}` : ""}`);
 
+// AI Copilot Endpoints
+export const sendAIChat = (message, history = []) => API.post("/ai/chat", { message, history });
+export const getAIGreeting = () => API.get("/ai/greeting");
+export const generateSubtasksAI = (data) => API.post("/ai/generate-subtasks", data);
+export const getAIInsights = () => API.get("/ai/insights");
+
 API.getNotifications = getNotifications;
+API.getNotificationList = getNotificationList;
 API.markAllRead = markAllRead;
 API.markOneRead = markOneRead;
+API.deleteNotification = deleteNotification;
+API.clearReadNotifications = clearReadNotifications;
+API.getNotificationPreferences = getNotificationPreferences;
+API.updateNotificationPreferences = updateNotificationPreferences;
+API.triggerCheckReminders = triggerCheckReminders;
+API.triggerSendWeeklyDigest = triggerSendWeeklyDigest;
+API.getCollaborators = getCollaborators;
+API.getPresenceStatus = getPresenceStatus;
+API.getTaskComments = getTaskComments;
+API.postTaskComment = postTaskComment;
+API.reactToComment = reactToComment;
+API.editTaskComment = editTaskComment;
+API.deleteTaskComment = deleteTaskComment;
+API.uploadAttachmentVersion = uploadAttachmentVersion;
+API.getAttachmentVersions = getAttachmentVersions;
 API.createTaskWithFiles = createTaskWithFiles;
 API.updateTaskWithFiles = updateTaskWithFiles;
 API.addSubtask = addSubtask;
@@ -89,5 +150,9 @@ API.createTemplate = createTemplate;
 API.createFromTemplate = createFromTemplate;
 API.getKanbanTasks = getKanbanTasks;
 API.getCalendarTasks = getCalendarTasks;
+API.sendAIChat = sendAIChat;
+API.getAIGreeting = getAIGreeting;
+API.generateSubtasksAI = generateSubtasksAI;
+API.getAIInsights = getAIInsights;
 
 export default API;

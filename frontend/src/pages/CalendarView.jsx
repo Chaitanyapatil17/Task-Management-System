@@ -124,15 +124,15 @@ export default function CalendarView() {
             ))}
           </select>
 
-          <div style={{ display: "flex", background: "var(--gray-100)", borderRadius: "var(--radius)", padding: 3 }}>
+          <div style={{ display: "flex", background: "rgba(255, 255, 255, 0.06)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: 3 }}>
             <button
               onClick={() => setViewMode("week")}
               style={{
                 padding: "6px 14px",
                 border: "none",
                 borderRadius: "var(--radius-sm)",
-                background: viewMode === "week" ? "#fff" : "transparent",
-                color: viewMode === "week" ? "var(--primary-dark)" : "var(--gray-500)",
+                background: viewMode === "week" ? "rgba(6, 182, 212, 0.25)" : "transparent",
+                color: viewMode === "week" ? "#38bdf8" : "var(--text-2)",
                 fontWeight: viewMode === "week" ? 700 : 500,
                 cursor: "pointer",
                 fontSize: 13,
@@ -147,8 +147,8 @@ export default function CalendarView() {
                 padding: "6px 14px",
                 border: "none",
                 borderRadius: "var(--radius-sm)",
-                background: viewMode === "month" ? "#fff" : "transparent",
-                color: viewMode === "month" ? "var(--primary-dark)" : "var(--gray-500)",
+                background: viewMode === "month" ? "rgba(6, 182, 212, 0.25)" : "transparent",
+                color: viewMode === "month" ? "#38bdf8" : "var(--text-2)",
                 fontWeight: viewMode === "month" ? 700 : 500,
                 cursor: "pointer",
                 fontSize: 13,
@@ -168,8 +168,9 @@ export default function CalendarView() {
       </div>
 
       <div style={{
-        background: "#fff",
-        border: "1px solid var(--gray-200)",
+        background: "rgba(10, 20, 35, 0.78)",
+        backdropFilter: "blur(16px)",
+        border: "1px solid var(--border)",
         borderRadius: "var(--radius-lg)",
         overflow: "hidden",
       }}>
@@ -180,13 +181,13 @@ export default function CalendarView() {
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d, i) => (
             <div key={i} style={{
               padding: "10px 12px",
-              borderBottom: "1px solid var(--gray-200)",
-              borderRight: i < 6 ? "1px solid var(--gray-200)" : "none",
-              background: "var(--gray-50)",
+              borderBottom: "1px solid var(--border)",
+              borderRight: i < 6 ? "1px solid var(--border)" : "none",
+              background: "rgba(255, 255, 255, 0.03)",
               textAlign: "center",
               fontSize: 12,
               fontWeight: 700,
-              color: "var(--gray-500)",
+              color: "var(--text-3)",
               textTransform: "uppercase",
               letterSpacing: 0.5,
             }}>
@@ -211,24 +212,24 @@ export default function CalendarView() {
                 key={i}
                 style={{
                   minHeight: 100,
-                  borderRight: i % 7 !== 6 ? "1px solid var(--gray-200)" : "none",
-                  borderBottom: "1px solid var(--gray-200)",
+                  borderRight: i % 7 !== 6 ? "1px solid var(--border)" : "none",
+                  borderBottom: "1px solid var(--border)",
                   padding: 8,
-                  background: isToday ? "var(--primary-light)" : isCurrentMonth ? "#fff" : "var(--gray-50)",
+                  background: isToday ? "rgba(6, 182, 212, 0.12)" : isCurrentMonth ? "rgba(14, 26, 46, 0.85)" : "rgba(6, 14, 26, 0.4)",
                   position: "relative",
                 }}
               >
                 <div style={{
                   fontSize: 12,
                   fontWeight: isToday ? 700 : 500,
-                  color: isToday ? "var(--primary-dark)" : isCurrentMonth ? "var(--gray-700)" : "var(--gray-400)",
+                  color: isToday ? "#38bdf8" : isCurrentMonth ? "#ffffff" : "var(--text-3)",
                   marginBottom: 6,
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                 }}>
                   <span>{day.getDate()}</span>
-                  {isToday && <span style={{ fontSize: 10, background: "var(--primary)", color: "#fff", padding: "1px 6px", borderRadius: "10px" }}>Today</span>}
+                  {isToday && <span style={{ fontSize: 10, background: "var(--primary)", color: "#030712", fontWeight: 800, padding: "1px 6px", borderRadius: "10px" }}>Today</span>}
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -242,9 +243,9 @@ export default function CalendarView() {
                         fontSize: 11,
                         fontWeight: 600,
                         cursor: "pointer",
-                        background: task.status === "Done" ? "var(--success-light)" : task.status === "In Progress" ? "#dbeafe" : "var(--warning-light)",
-                        color: task.status === "Done" ? "#065f46" : task.status === "In Progress" ? "#1e40af" : "#92400e",
-                        borderLeft: `3px solid ${task.status === "Done" ? "var(--success)" : task.status === "In Progress" ? "#3b82f6" : "var(--warning)"}`,
+                        background: task.status === "Done" ? "rgba(16, 185, 129, 0.18)" : task.status === "In Progress" ? "rgba(6, 182, 212, 0.18)" : "rgba(245, 158, 11, 0.18)",
+                        color: task.status === "Done" ? "#34d399" : task.status === "In Progress" ? "#38bdf8" : "#fbbf24",
+                        borderLeft: `3px solid ${task.status === "Done" ? "#10b981" : task.status === "In Progress" ? "#06b6d4" : "#f59e0b"}`,
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",

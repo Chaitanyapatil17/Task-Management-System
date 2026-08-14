@@ -12,10 +12,13 @@
   "dependencies": {
     "@react-oauth/google": "^0.12.1",
     "axios": "^1.19.0",
+    "gsap": "^3.15.0",
+    "ogl": "^1.0.11",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
-    "recharts": "^2.12.7"
+    "recharts": "^2.12.7",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

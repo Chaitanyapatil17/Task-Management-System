@@ -283,44 +283,47 @@ function AdminDashboard() {
             <span className="chart-badge">Live Aggregation</span>
           </div>
 
-          <div className="chart-body donut-chart-container">
+          <div className="chart-body donut-chart-container" style={{ width: "100%", height: 230, minHeight: 230, position: "relative" }}>
             {statusPieData.length === 0 ? (
               <div className="chart-empty-state">
                 <p>No task data available</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={230}>
-                <PieChart>
-                  <Pie
-                    data={statusPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={58}
-                    outerRadius={85}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {statusPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "var(--card-bg, #ffffff)",
-                      borderColor: "var(--gray-200, #e2e8f0)",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    formatter={(value) => <span className="chart-legend-label">{value}</span>}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <div style={{ width: "100%", height: 230, position: "relative" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={58}
+                      outerRadius={85}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {statusPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--card-bg, #ffffff)",
+                        borderColor: "var(--gray-200, #e2e8f0)",
+                        color: "var(--gray-800, #1e293b)",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                      }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      formatter={(value) => <span className="chart-legend-label">{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
         </div>
@@ -335,29 +338,32 @@ function AdminDashboard() {
             <span className="chart-badge indigo">System Metrics</span>
           </div>
 
-          <div className="chart-body bar-chart-container">
-            <ResponsiveContainer width="100%" height={230}>
-              <BarChart data={statusBarData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
-                <XAxis dataKey="name" stroke="var(--gray-400)" fontSize={12} tickLine={false} />
-                <YAxis allowDecimals={false} stroke="var(--gray-400)" fontSize={12} tickLine={false} />
-                <Tooltip
-                  cursor={{ fill: "rgba(5, 150, 105, 0.06)" }}
-                  contentStyle={{
-                    backgroundColor: "var(--card-bg, #ffffff)",
-                    borderColor: "var(--gray-200, #e2e8f0)",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {statusBarData.map((entry, index) => (
-                    <Cell key={`bar-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="chart-body bar-chart-container" style={{ width: "100%", height: 230, minHeight: 230, position: "relative" }}>
+            <div style={{ width: "100%", height: 230, position: "relative" }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusBarData} margin={{ top: 20, right: 20, left: -20, bottom: 5 }}>
+                  <XAxis dataKey="name" stroke="var(--gray-400)" fontSize={12} tickLine={false} />
+                  <YAxis allowDecimals={false} stroke="var(--gray-400)" fontSize={12} tickLine={false} />
+                  <Tooltip
+                    cursor={{ fill: "rgba(5, 150, 105, 0.08)" }}
+                    contentStyle={{
+                      backgroundColor: "var(--card-bg, #ffffff)",
+                      borderColor: "var(--gray-200, #e2e8f0)",
+                      color: "var(--gray-800, #1e293b)",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                    }}
+                  />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                    {statusBarData.map((entry, index) => (
+                      <Cell key={`bar-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>

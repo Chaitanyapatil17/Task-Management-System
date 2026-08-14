@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Landing from "./pages/Landing";
 
 import Tasks from "./pages/Tasks";
 import CreateTask from "./pages/CreateTask";
@@ -28,6 +29,9 @@ import TaskDetail from "./pages/TaskDetail";
 import UserDashboard from "./pages/UserDashboard";
 import KanbanBoard from "./pages/KanbanBoard";
 import CalendarView from "./pages/CalendarView";
+import AIChatBot from "./components/AIChatBot";
+import NotificationCenter from "./pages/NotificationCenter";
+import { SocketProvider } from "./context/SocketContext";
 
 import "./App.css";
 
@@ -50,25 +54,37 @@ function MainLayout() {
           <Outlet />
         </main>
       </div>
+      <AIChatBot />
     </div>
   );
 }
 
 
+
 function App() {
+  useEffect(() => {
+    localStorage.removeItem("tms-theme");
+    document.documentElement.removeAttribute("data-theme");
+  }, []);
+
   return (
-    <BrowserRouter>
+    <SocketProvider>
+      <BrowserRouter>
 
       <Routes>
 
         {/* =================================
-            LOGIN
+            LANDING PAGE (DEFAULT)
         ================================= */}
 
         <Route
           path="/"
-          element={<Login />}
+          element={<Landing />}
         />
+
+        {/* =================================
+            AUTH (LOGIN & REGISTER)
+        ================================= */}
 
         <Route
           path="/login"
@@ -273,11 +289,30 @@ function App() {
             }
           />
 
+          {/* Notification Center */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute allowedRole="user">
+                <NotificationCenter />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/notifications"
+            element={
+              <ProtectedRoute allowedRole="admin">
+                <NotificationCenter />
+              </ProtectedRoute>
+            }
+          />
+
         </Route>
 
       </Routes>
-
     </BrowserRouter>
+  </SocketProvider>
   );
 }
 

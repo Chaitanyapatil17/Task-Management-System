@@ -379,6 +379,51 @@ const googleLogin = async (req, res) => {
 };
 
 
+// =========================
+// Get Collaborators (for @mentions & assignment)
+// Accessible by all authenticated users
+// GET /api/auth/collaborators
+// =========================
+const getCollaborators = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("_id name email role avatar")
+      .sort({ name: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// =========================
+// Get Presence Status
+// GET /api/auth/presence
+// =========================
+const getPresenceStatus = async (req, res) => {
+  try {
+    const { getOnlineUsersList, getOnlineUserIds } = require("../utils/socket");
+    res.status(200).json({
+      success: true,
+      data: {
+        onlineUsers: getOnlineUsersList(),
+        onlineUserIds: getOnlineUserIds(),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -387,4 +432,6 @@ module.exports = {
   createAdminByAdmin,
   getUsers,
   deleteUser,
+  getCollaborators,
+  getPresenceStatus,
 };

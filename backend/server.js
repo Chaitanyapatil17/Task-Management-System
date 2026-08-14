@@ -10,10 +10,22 @@ const taskRoutes         = require("./routes/taskRoutes");
 const authRoutes         = require("./routes/authRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const commentRoutes      = require("./routes/commentRoutes");
+const aiRoutes           = require("./routes/aiRoutes");
 
 connectDB();
 
+const http = require("http");
+const { initSocket } = require("./utils/socket");
+const { startReminderScheduler } = require("./services/reminderScheduler");
+
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.io
+initSocket(server);
+
+// Initialize Automated Due Date Reminders & Alerts Scheduler
+startReminderScheduler();
 
 app.use(cors());
 app.use(express.json());
@@ -35,11 +47,12 @@ app.get("/", (req, res) => {
 app.use("/api/tasks", taskRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/ai", aiRoutes);
 // Nested: /api/tasks/:taskId/comments
 app.use("/api/tasks/:taskId/comments", commentRoutes);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

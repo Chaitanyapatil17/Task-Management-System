@@ -78,6 +78,25 @@ export default function AdminTasks() {
   useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, userFilter, tagFilter, archivedFilter]);
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
+  // Real-time synchronization
+  useEffect(() => {
+    const handleRealtimeUpdate = () => {
+      fetchTasks();
+    };
+
+    window.addEventListener("socket:task:created", handleRealtimeUpdate);
+    window.addEventListener("socket:task:updated", handleRealtimeUpdate);
+    window.addEventListener("socket:task:deleted", handleRealtimeUpdate);
+    window.addEventListener("socket:tasks:bulk_updated", handleRealtimeUpdate);
+
+    return () => {
+      window.removeEventListener("socket:task:created", handleRealtimeUpdate);
+      window.removeEventListener("socket:task:updated", handleRealtimeUpdate);
+      window.removeEventListener("socket:task:deleted", handleRealtimeUpdate);
+      window.removeEventListener("socket:tasks:bulk_updated", handleRealtimeUpdate);
+    };
+  }, [fetchTasks]);
+
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this task? This cannot be undone.")) return;
     try {

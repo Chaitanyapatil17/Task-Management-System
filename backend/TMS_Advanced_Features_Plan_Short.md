@@ -37,13 +37,13 @@ Current stack/features should remain compatible: React + Vite, Node.js + Express
 
 ## 3. Notifications
 
-- Advanced notification center
-- Assignment, mention, deadline and status notifications
-- Email notification preferences
-- Due-date reminders
-- Overdue alerts
-- Notification grouping
-- Weekly productivity digest
+- [x] Advanced notification center
+- [x] Assignment, mention, deadline and status notifications
+- [x] Email notification preferences
+- [x] Due-date reminders
+- [x] Overdue alerts
+- [x] Notification grouping
+- [x] Weekly productivity digest
 
 ---
 
@@ -156,12 +156,12 @@ The existing authentication uses JWT and Google authentication, so these should 
 - [ ] Calendar
 
 ## Phase 2 — Collaboration
-- [ ] Real-time updates
-- [ ] Mentions
-- [ ] Advanced comments
-- [ ] Notifications
-- [ ] Activity feed
-- [ ] File improvements
+- [x] Real-time updates
+- [x] Mentions
+- [x] Advanced comments
+- [x] Notifications
+- [x] Activity feed
+- [x] File improvements
 
 ## Phase 3 — Management
 - [ ] Projects

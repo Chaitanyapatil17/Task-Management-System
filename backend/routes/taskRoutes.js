@@ -7,6 +7,8 @@ const {
   deleteTask,
   getAnalytics,
   deleteAttachment,
+  uploadAttachmentVersion,
+  getAttachmentVersions,
   getUserDashboardStats,
   addPrerequisites,
   removePrerequisite,
@@ -55,8 +57,10 @@ router.post("/",   protect, upload.array("attachments", 5), createTask);
 router.put("/:id", protect, upload.array("attachments", 5), updateTask);
 router.delete("/:id", protect, deleteTask);
 
-// Attachment management
+// Attachment management & Versioning
 router.delete("/:id/attachments/:attachmentId", protect, deleteAttachment);
+router.post("/:id/attachments/:attachmentId/version", protect, upload.single("file"), uploadAttachmentVersion);
+router.get("/:id/attachments/:attachmentId/versions", protect, getAttachmentVersions);
 
 // Prerequisites management
 router.post("/:id/prerequisites", protect, addPrerequisites);
